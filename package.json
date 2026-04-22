@@ -1,0 +1,25 @@
+{
+  "name": "event-management-platform",
+  "version": "1.0.0",
+  "description": "Event Management Platform - Monorepo",
+  "private": true,
+  "workspaces": [
+    "src/api",
+    "src/web"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=src/api",
+    "dev:web": "npm run dev --workspace=src/web",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build": "npm run build --workspace=src/api && npm run build --workspace=src/web",
+    "db:generate": "npm run db:generate --workspace=src/api",
+    "db:migrate": "npm run db:migrate --workspace=src/api",
+    "db:seed": "npm run db:seed --workspace=src/api"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "node-cron": "^4.2.1"
+  }
+}

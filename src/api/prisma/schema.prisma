@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enum for User Roles
+enum Role {
+  CUSTOMER
+  ORGANIZER
+}
+
+// User Model
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  password        String
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  role            Role      @default(CUSTOMER)
+  referralCode    String    @unique @map("referral_code")
+  referredBy      Int?      @map("referred_by")
+  profilePicture  String?   @map("profile_picture")
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  passwordResetToken String? @map("password_reset_token")
+  passwordResetExpires DateTime? @map("password_reset_expires")
+  phone           String?   @map("phone")
+  birthDate       DateTime? @map("birth_date")
+  gender          String?   @map("gender")
+  pointsBalance   Int       @default(0) @map("points_balance")
+  pointsExpiry    DateTime? @map("points_expiry")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  referrer        User?     @relation("UserReferrals", fields: [referredBy], references: [id])
+  referrals       User[]    @relation("UserReferrals")
+  points          Point[]
+  coupons         Coupon[]
+  events          Event[]      // Events created by organizer
+  transactions    Transaction[] // Transactions made by customer
+  reviews         Review[]     // Reviews given by customer
+  
+  @@map("users")
+}
+
+// Points System
+model Point {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  amount      Int
+  reason      String
+  expiresAt   DateTime  @map("expires_at")
+  isUsed      Boolean   @default(false) @map("is_used")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("points")
+}
+
+// Coupon System
+model Coupon {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  code        String    @unique
+  discount    Int       // Discount percentage or amount
+  expiresAt   DateTime  @map("expires_at")
+  isUsed      Boolean   @default(false) @map("is_used")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coupons")
+}
+
+// ============================================
+// EVENT MANAGEMENT SYSTEM (Simon + Dimas)
+// ============================================
+
+// Enum for Event Categories
+enum EventCategory {
+  MUSIC
+  SPORTS
+  TECHNOLOGY
+  BUSINESS
+  ARTS
+  FOOD
+  EDUCATION
+  OTHER
+}
+
+// Enum for Transaction Status
+enum TransactionStatus {
+  WAITING_PAYMENT
+  WAITING_CONFIRMATION
+  DONE
+  REJECTED
+  EXPIRED
+  CANCELED
+}
+
+// Event Model
+model Event {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String?   @db.Text
+  location        String
+  category        EventCategory @default(OTHER)
+  
+  // Pricing & Capacity
+  price           Int       @default(0) // 0 = free event
+  totalSeats      Int       @map("total_seats")
+  availableSeats  Int       @map("available_seats")
+  
+  // Dates
+  startDate       DateTime  @map("start_date")
+  endDate         DateTime? @map("end_date")
+  registrationDeadline DateTime? @map("registration_deadline")
+  
+  // Media
+  imageUrl        String?   @map("image_url")
+  
+  // Organizer
+  organizerId     Int       @map("organizer_id")
+  
+  // Status
+  isPublished     Boolean   @default(false) @map("is_published")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  organizer       User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  reviews         Review[]
+  vouchers        EventVoucher[]
+  
+  @@map("events")
+}
+
+// Event Voucher (Event-specific promotions)
+model EventVoucher {
+  id          Int       @id @default(autoincrement())
+  eventId     Int       @map("event_id")
+  code        String
+  discount    Int       // Percentage discount
+  quota       Int       // Maximum usage
+  usedCount   Int       @default(0) @map("used_count")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, code])
+  @@map("event_vouchers")
+}
+
+// Transaction Model
+model Transaction {
+  id              Int       @id @default(autoincrement())
+  
+  // User & Event
+  userId          Int       @map("user_id")
+  eventId         Int       @map("event_id")
+  
+  // Ticket Details
+  ticketCount     Int       @map("ticket_count")
+  ticketPrice     Int       @map("ticket_price") // Price at time of purchase
+  
+  // Pricing Breakdown
+  subtotal        Int       // ticketCount * ticketPrice
+  pointsUsed      Int       @default(0) @map("points_used")
+  voucherDiscount Int       @default(0) @map("voucher_discount")
+  totalAmount     Int       @map("total_amount")
+  
+  // Voucher Used
+  voucherCode     String?   @map("voucher_code")
+  
+  // Payment Proof
+  paymentProofUrl String?   @map("payment_proof_url")
+  
+  // Status
+  status          TransactionStatus @default(WAITING_PAYMENT)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  expiredAt       DateTime? @map("expired_at") // Auto expire after 2 hours if no payment
+  confirmedAt     DateTime? @map("confirmed_at") // When organizer confirms
+  
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  review          Review?   // One review per transaction (optional)
+  
+  @@map("transactions")
+}
+
+// Review & Rating Model
+model Review {
+  id              Int       @id @default(autoincrement())
+  
+  // Relations
+  transactionId   Int       @unique @map("transaction_id") // One review per transaction
+  eventId         Int       @map("event_id")
+  userId          Int       @map("user_id")
+  
+  // Review Content
+  rating          Int       // 1-5
+  comment         String?   @db.Text
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("reviews")
+}
