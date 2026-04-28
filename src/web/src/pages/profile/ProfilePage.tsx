@@ -47,7 +47,7 @@ interface Toast {
 }
 
 export default function ProfilePage() {
-  const { user, logout, setUser } = useAuth()
+  const { user, logout, upgradeToOrganizer } = useAuth()
   const navigate = useNavigate()
   const [points, setPoints] = useState<PointsData | null>(null)
   const [coupons, setCoupons] = useState<CouponsData | null>(null)
@@ -56,9 +56,10 @@ export default function ProfilePage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [agreements, setAgreements] = useState({
     responsible: false,
-    noMisuse: false,
+    noMisuse: false
   })
   const [orderFilter, setOrderFilter] = useState<'all' | 'success' | 'pending' | 'failed'>('all')
 
@@ -166,15 +167,16 @@ export default function ProfilePage() {
 
   const handleUpgradeSubmit = async () => {
     if (!agreements.responsible || !agreements.noMisuse) return
-    
+
     setUpgrading(true)
     try {
-      const response = await api.post('/user/upgrade-organizer')
-      if (user && response.data?.data) {
-        setUser({ ...user, role: 'ORGANIZER' })
-      }
+      await upgradeToOrganizer()
       setShowUpgradeModal(false)
-      addToast('Berhasil menjadi Event Organizer!', 'success')
+      setShowSuccessModal(true)
+      // Auto logout after 2 seconds
+      setTimeout(() => {
+        handleLogout()
+      }, 2000)
     } catch (error: any) {
       addToast(error.response?.data?.message || 'Gagal upgrade', 'error')
     } finally {
@@ -248,7 +250,7 @@ export default function ProfilePage() {
                   Saya bertanggung jawab atas event yang saya buat
                 </span>
               </label>
-              
+
               <label className="flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
@@ -263,13 +265,13 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex gap-3">
-              <button 
-                onClick={() => setShowUpgradeModal(false)} 
+              <button
+                onClick={() => setShowUpgradeModal(false)}
                 className="flex-1 rounded-xl border border-[#b2a6d5] px-4 py-2.5 text-sm font-semibold text-[#32294f] transition hover:bg-[#f5eeff]"
               >
                 Batal
               </button>
-              <button 
+              <button
                 onClick={handleUpgradeSubmit}
                 disabled={!agreements.responsible || !agreements.noMisuse || upgrading}
                 className="flex-1 rounded-xl bg-[#4a3fe2] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3d2fd6] disabled:opacity-50"
@@ -277,6 +279,23 @@ export default function ProfilePage() {
                 {upgrading ? 'Memproses...' : 'Konfirmasi'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#32294f]/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-[#b2a6d5]/20 bg-white p-6 sm:p-8 shadow-xl text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-[#32294f]">Berhasil!</h3>
+            <p className="mt-2 text-sm text-[#5f557f]">
+              Akun Anda telah menjadi Event Organizer. Anda akan keluar otomatis untuk login kembali.
+            </p>
           </div>
         </div>
       )}

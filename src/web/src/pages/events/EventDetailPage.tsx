@@ -98,7 +98,7 @@ export default function EventDetailPage() {
     }
   }
 
-  const isOrganizer = user && event && user.role === 'ORGANIZER' && user.id === event.organizer.id
+  const isOrganizer = !!(user && event && user.role === 'ORGANIZER' && user.id === event.organizer.id)
 
   if (loading) {
     return (
@@ -370,9 +370,20 @@ export default function EventDetailPage() {
                   }
                   navigate(`/checkout/${event.slug}`)
                 }}
-                className="w-full rounded-xl bg-[#4a3fe2] px-4 py-3 sm:px-6 sm:py-3 text-center text-xs sm:text-sm font-semibold text-white transition hover:bg-[#3f35c0]"
+                disabled={event.availableSeats === 0 || isOrganizer}
+                className={`w-full rounded-xl px-4 py-3 sm:px-6 sm:py-3 text-center text-xs sm:text-sm font-semibold text-white transition ${
+                  event.availableSeats === 0 || isOrganizer
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-[#4a3fe2] hover:bg-[#3f35c0]'
+                }`}
               >
-                {event.availableSeats === 0 ? 'Sold Out' : user ? 'Beli Tiket' : 'Login untuk Beli Tiket'}
+                {event.availableSeats === 0
+                  ? 'Sold Out'
+                  : isOrganizer
+                  ? 'Anda adalah penyelenggara event ini'
+                  : user
+                  ? 'Beli Tiket'
+                  : 'Login untuk Beli Tiket'}
               </button>
 
               {/* Organizer Info */}
