@@ -283,7 +283,7 @@ export default function LandingPage() {
               </Link>
               {user?.role === 'ORGANIZER' && (
                 <Link
-                  to="/organizer/dashboard"
+                  to="/events/create"
                   className="px-4 py-3 md:px-6 md:py-4 text-[#4a3fe2] font-bold hover:underline underline-offset-4 transition-all text-sm md:text-base"
                 >
                   Buat Event
