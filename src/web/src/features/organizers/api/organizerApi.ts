@@ -107,6 +107,12 @@ export interface Attendee {
     email: string
     phone: string | null
   }
+  participant: {
+    firstName: string
+    lastName: string
+    email: string
+    phone: string | null
+  }
   ticketCount: number
   ticketPrice: number
   totalAmount: number
