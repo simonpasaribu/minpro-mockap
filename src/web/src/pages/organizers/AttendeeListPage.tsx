@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { organizerApi, Attendee, OrganizerEvent } from '../../features/organizers/api/organizerApi'
-import { ArrowLeft, Users, Mail, Phone, Calendar, DollarSign, Download, Ticket } from 'lucide-react'
+import { ArrowLeft, Users, Mail, Phone, Calendar, DollarSign, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function AttendeeListPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [attendees, setAttendees] = useState<Attendee[]>([])
+  const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>([])
   const [event, setEvent] = useState<OrganizerEvent | null>(null)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -19,6 +23,36 @@ export default function AttendeeListPage() {
       fetchAttendees()
     }
   }, [slug])
+
+  // Search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim() === '') {
+        setFilteredAttendees(attendees)
+      } else {
+        const query = searchQuery.toLowerCase()
+        const filtered = attendees.filter(attendee =>
+          attendee.participant.firstName.toLowerCase().includes(query) ||
+          attendee.participant.lastName.toLowerCase().includes(query) ||
+          `${attendee.participant.firstName} ${attendee.participant.lastName}`.toLowerCase().includes(query) ||
+          attendee.user.firstName.toLowerCase().includes(query) ||
+          attendee.user.lastName.toLowerCase().includes(query) ||
+          `${attendee.user.firstName} ${attendee.user.lastName}`.toLowerCase().includes(query) ||
+          attendee.participant.email.toLowerCase().includes(query) ||
+          attendee.user.email.toLowerCase().includes(query)
+        )
+        setFilteredAttendees(filtered)
+      }
+      setCurrentPage(1) // Reset to first page on search
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, attendees])
+
+  // Update filtered attendees when attendees change
+  useEffect(() => {
+    setFilteredAttendees(attendees)
+  }, [attendees])
 
   const fetchAttendees = async () => {
     try {
@@ -62,30 +96,6 @@ export default function AttendeeListPage() {
     })
   }
 
-  const handleExportCSV = () => {
-    const headers = ['Nama', 'Email', 'Telepon', 'Jumlah Tiket', 'Harga per Tiket', 'Total Harga', 'Tanggal Pembelian']
-    const rows = attendees.map(a => [
-      `${a.user.firstName} ${a.user.lastName}`,
-      a.user.email,
-      a.user.phone || '-',
-      a.ticketCount.toString(),
-      formatPrice(a.ticketPrice),
-      formatPrice(a.totalAmount),
-      formatDate(a.purchasedAt),
-    ])
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `attendees_event_${slug}.csv`
-    link.click()
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20">
@@ -110,7 +120,7 @@ export default function AttendeeListPage() {
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/organizer/dashboard', { state: { activeTab: 'events' } })}
           className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#e2d7ff] text-[#4e339c] font-semibold hover:bg-[#d8caff] transition-colors mb-4 sm:mb-6 text-sm sm:text-base"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -123,42 +133,36 @@ export default function AttendeeListPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Daftar Peserta</h1>
             <p className="text-gray-600 mt-0.5 sm:mt-1 text-sm sm:text-base">
-              Total {attendees.length} peserta terdaftar
+              Total {filteredAttendees.length} peserta terdaftar
             </p>
           </div>
-          <button
-            onClick={handleExportCSV}
-            disabled={attendees.length === 0}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-          >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Export CSV</span>
-          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Cari berdasarkan nama peserta, pembeli, atau email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+            />
+          </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm">Total Peserta</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {attendees.length}
+                  {filteredAttendees.length}
                 </p>
               </div>
               <Users className="w-12 h-12 text-blue-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Tiket Terjual</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {attendees.reduce((sum, a) => sum + a.ticketCount, 0)}
-                </p>
-              </div>
-              <Ticket className="w-12 h-12 text-purple-600" />
             </div>
           </div>
 
@@ -179,7 +183,7 @@ export default function AttendeeListPage() {
               <div>
                 <p className="text-gray-500 text-sm">Total Pendapatan</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {formatPrice(attendees.reduce((sum, a) => sum + a.totalAmount, 0))}
+                  {formatPrice(filteredAttendees.reduce((sum, a) => sum + a.totalAmount, 0))}
                 </p>
               </div>
               <DollarSign className="w-12 h-12 text-green-600" />
@@ -189,82 +193,124 @@ export default function AttendeeListPage() {
 
         {/* Attendees Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {attendees.length === 0 ? (
+          {filteredAttendees.length === 0 ? (
             <div className="text-center py-12">
               <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Belum ada peserta</p>
+              <p className="text-gray-500">{searchQuery ? 'Tidak ada peserta yang cocok dengan pencarian' : 'Belum ada peserta'}</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Peserta
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Kontak
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tiket
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Harga
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tanggal Pembelian
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {attendees.map((attendee) => (
-                    <tr key={attendee.transactionId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                            {attendee.user.firstName[0]}{attendee.user.lastName[0]}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {attendee.user.firstName} {attendee.user.lastName}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                            {attendee.user.email}
-                          </div>
-                          {attendee.user.phone && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                              {attendee.user.phone}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {attendee.ticketCount} x {formatPrice(attendee.ticketPrice)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {formatPrice(attendee.totalAmount)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {formatDate(attendee.purchasedAt)}
-                        </div>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Peserta
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Kontak
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Harga
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tanggal Pembelian
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredAttendees
+                      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((attendee) => (
+                        <tr key={attendee.transactionId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                {attendee.participant.firstName[0]}{attendee.participant.lastName[0]}
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {attendee.participant.firstName} {attendee.participant.lastName}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  dibeli oleh: {attendee.user.firstName} {attendee.user.lastName}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="space-y-1">
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                                {attendee.participant.email}
+                              </div>
+                              {attendee.participant.phone && (
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                                  {attendee.participant.phone}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {formatPrice(attendee.totalAmount)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-600">
+                              {formatDate(attendee.purchasedAt)}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {filteredAttendees.length > itemsPerPage && (
+                <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">
+                      Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredAttendees.length)} dari {filteredAttendees.length} peserta
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value))
+                        setCurrentPage(1)
+                      }}
+                      className="px-3 py-1 border border-gray-300 rounded text-sm"
+                    >
+                      <option value={10}>10 per halaman</option>
+                      <option value={20}>20 per halaman</option>
+                    </select>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Sebelumnya</span>
+                    </button>
+                    <span className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
+                      {currentPage}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredAttendees.length / itemsPerPage)))}
+                      disabled={currentPage === Math.ceil(filteredAttendees.length / itemsPerPage)}
+                      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    >
+                      <span className="hidden sm:inline">Selanjutnya</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

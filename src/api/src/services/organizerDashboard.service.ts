@@ -327,6 +327,12 @@ export class OrganizerDashboardService {
     return transactions.map(t => ({
       transactionId: t.id,
       user: t.user,
+      participant: {
+        firstName: t.attendeeFullName ? t.attendeeFullName.split(' ')[0] : t.user.firstName,
+        lastName: t.attendeeFullName ? t.attendeeFullName.split(' ').slice(1).join(' ') || '' : t.user.lastName,
+        email: t.user.email,
+        phone: t.attendeePhone || t.user.phone,
+      },
       ticketCount: t.ticketCount,
       ticketPrice: t.ticketPrice,
       totalAmount: t.totalAmount,
