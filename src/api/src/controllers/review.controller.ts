@@ -135,4 +135,68 @@ export class ReviewController {
       })
     }
   }
+
+  // POST /api/reviews/:id/respond - Respond to review (organizer or customer)
+  static async respondToReview(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+      const reviewId = parseInt(req.params.id)
+      const { response } = req.body
+
+      const result = await ReviewService.respondToReview(
+        reviewId,
+        userId,
+        response
+      )
+
+      res.status(200).json({
+        success: true,
+        message: 'Response added successfully',
+        data: result,
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to respond to review',
+      })
+    }
+  }
+
+  // GET /api/reviews/organizer - Get organizer's reviews
+  static async getOrganizerReviews(req: Request, res: Response) {
+    try {
+      const organizerId = (req as any).user.userId
+
+      const result = await ReviewService.getOrganizerReviews(organizerId)
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get reviews',
+      })
+    }
+  }
+
+  // GET /api/reviews/event/by-slug/:slug - Get event reviews by slug (organizer only)
+  static async getEventReviewsBySlug(req: Request, res: Response) {
+    try {
+      const slug = req.params.slug
+
+      const result = await ReviewService.getEventReviewsBySlug(slug)
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get reviews',
+      })
+    }
+  }
 }

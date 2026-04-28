@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { reviewApi } from '../../features/reviews/api/reviewApi'
 import { transactionApi } from '../../features/transactions/api/transactionApi'
+import { organizerApi } from '../../features/organizers/api/organizerApi'
+import { useAuth } from '../../features/auth/components/AuthContext'
 import { Star, ArrowLeft, Loader2 } from 'lucide-react'
 
 interface TransactionDetail {
@@ -17,6 +19,7 @@ interface TransactionDetail {
 export default function ReviewPage() {
   const { transactionId } = useParams<{ transactionId: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [transaction, setTransaction] = useState<TransactionDetail | null>(null)
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -25,6 +28,10 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,18 +47,43 @@ export default function ReviewPage() {
           setError(canReviewRes.data.reason || 'Tidak dapat memberikan ulasan')
         }
 
-        // Get transaction details
-        const transactionRes = await transactionApi.getTransactionById(parseInt(transactionId))
-        setTransaction(transactionRes.data)
-      } catch (err) {
-        setError('Gagal memuat data')
+        // Get transaction details - use organizer API for organizers
+        let transactionData
+        if (user?.role === 'ORGANIZER') {
+          const transactions = await organizerApi.getTransactions()
+          const foundTransaction = transactions.find((t) => t.id === parseInt(transactionId))
+          if (foundTransaction) {
+            // Adapt organizer Transaction structure to match TransactionDetail interface
+            transactionData = {
+              id: foundTransaction.id,
+              event: {
+                id: foundTransaction.event.id,
+                title: foundTransaction.event.title,
+                imageUrl: null, // organizer API doesn't provide imageUrl
+                startDate: foundTransaction.event.startDate
+              }
+            }
+          } else {
+            setError('Transaksi tidak ditemukan')
+          }
+        } else {
+          const transactionRes = await transactionApi.getTransactionById(parseInt(transactionId))
+          transactionData = transactionRes.data
+        }
+
+        if (transactionData) {
+          setTransaction(transactionData)
+        }
+      } catch (err: any) {
+        console.error('Error loading review page:', err)
+        setError(err.response?.data?.message || err.message || 'Gagal memuat data')
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [transactionId])
+  }, [transactionId, user])
 
   const handleSubmit = async () => {
     if (rating === 0) {
@@ -102,45 +134,42 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            onClick={() => navigate(`/transactions/${transactionId}`)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Kembali</span>
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-50 pt-20">
+      {/* Back Button */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+        <button
+          onClick={() => navigate(`/transactions/${transactionId}`)}
+          className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#e2d7ff] text-[#4e339c] font-semibold hover:bg-[#d8caff] transition-colors mb-4 sm:mb-6 text-sm sm:text-base"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali</span>
+        </button>
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        <div className="max-w-2xl mx-auto">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
           Beri Ulasan
         </h1>
 
         {/* Event Info */}
         {transaction && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex gap-4">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="flex gap-3 sm:gap-4">
               {transaction.event.imageUrl ? (
                 <img
                   src={transaction.event.imageUrl}
                   alt={transaction.event.title}
-                  className="w-24 h-24 object-cover rounded-lg"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg"
                 />
               ) : (
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-xl font-bold">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg sm:text-xl font-bold">
                     {transaction.event.title[0]}
                   </span>
                 </div>
               )}
               <div>
-                <h2 className="font-semibold text-lg">{transaction.event.title}</h2>
-                <p className="text-gray-600">
+                <h2 className="font-semibold text-base sm:text-lg">{transaction.event.title}</h2>
+                <p className="text-gray-600 text-xs sm:text-sm">
                   {new Date(transaction.event.startDate).toLocaleDateString('id-ID')}
                 </p>
               </div>
@@ -149,8 +178,8 @@ export default function ReviewPage() {
         )}
 
         {/* Review Form */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="mb-6">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <div className="mb-4 sm:mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Rating
             </label>
@@ -217,6 +246,7 @@ export default function ReviewPage() {
               'Kirim Ulasan'
             )}
           </button>
+        </div>
         </div>
       </div>
     </div>

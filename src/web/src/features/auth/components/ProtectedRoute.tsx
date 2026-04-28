@@ -1,8 +1,12 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 
-export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
+interface ProtectedRouteProps {
+  requiredRole?: 'ORGANIZER' | 'USER'
+}
+
+export default function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, user } = useAuth()
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
@@ -10,6 +14,11 @@ export default function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  // Check role if required (case-insensitive)
+  if (requiredRole && user?.role?.toUpperCase() !== requiredRole) {
+    return <Navigate to="/" replace />
   }
 
   return <Outlet />

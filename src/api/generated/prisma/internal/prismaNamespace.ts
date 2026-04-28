@@ -970,6 +970,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  username: 'username',
   password: 'password',
   firstName: 'firstName',
   lastName: 'lastName',
@@ -1021,8 +1022,10 @@ export type CouponScalarFieldEnum = (typeof CouponScalarFieldEnum)[keyof typeof 
 export const EventScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  slug: 'slug',
   description: 'description',
   location: 'location',
+  eventLink: 'eventLink',
   category: 'category',
   price: 'price',
   totalSeats: 'totalSeats',
@@ -1066,6 +1069,10 @@ export const TransactionScalarFieldEnum = {
   totalAmount: 'totalAmount',
   voucherCode: 'voucherCode',
   paymentProofUrl: 'paymentProofUrl',
+  attendeeFullName: 'attendeeFullName',
+  attendeeIdType: 'attendeeIdType',
+  attendeeIdNumber: 'attendeeIdNumber',
+  attendeePhone: 'attendeePhone',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -1083,6 +1090,8 @@ export const ReviewScalarFieldEnum = {
   userId: 'userId',
   rating: 'rating',
   comment: 'comment',
+  response: 'response',
+  respondedAt: 'respondedAt',
   createdAt: 'createdAt'
 } as const
 

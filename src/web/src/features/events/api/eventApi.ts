@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -17,6 +17,7 @@ api.interceptors.request.use((config) => {
 
 export interface Event {
   id: number
+  slug: string
   title: string
   description: string | null
   location: string
@@ -37,7 +38,13 @@ export interface Event {
     firstName: string
     lastName: string
     profilePicture: string | null
+    username: string
   }
+  vouchers?: {
+    code: string
+    discount: number
+    expiresAt: string
+  }[]
   _count: {
     transactions: number
     reviews: number
@@ -68,10 +75,10 @@ export const eventApi = {
     return response.data
   },
 
-  // Get single event details (public)
-  getEventById: async (id: number) => {
-    const response = await api.get(`/events/${id}`)
-    return response.data
+  // Get single event details by slug (public)
+  getEventBySlug: async (slug: string) => {
+    const response = await api.get(`/events/${slug}`)
+    return response.data.data
   },
 
   // Get event categories
@@ -80,15 +87,27 @@ export const eventApi = {
     return response.data
   },
 
-  // Get event reviews (public)
-  getEventReviews: async (eventId: number) => {
-    const response = await api.get(`/reviews/event/${eventId}`)
+  // Get public platform statistics
+  getPublicStats: async () => {
+    const response = await api.get('/events/stats')
     return response.data
   },
 
-  // Get organizer profile (public)
-  getOrganizerProfile: async (organizerId: number) => {
-    const response = await api.get(`/organizers/${organizerId}`)
+  // Get event reviews by slug (public)
+  getEventReviews: async (eventSlug: string) => {
+    const response = await api.get(`/reviews/event/${eventSlug}`)
+    return response.data
+  },
+
+  // Get organizer profile by username (public)
+  getOrganizerProfile: async (username: string) => {
+    const response = await api.get(`/organizers/${username}`)
+    return response.data
+  },
+
+  // Get popular events sorted by transaction count (most popular first)
+  getPopularEvents: async (limit: number = 8) => {
+    const response = await api.get(`/events/popular?limit=${limit}`)
     return response.data
   },
 }

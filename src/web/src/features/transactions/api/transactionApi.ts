@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,6 +14,9 @@ api.interceptors.request.use((config) => {
   }
   return config
 })
+
+// Export api client for use by other modules
+export { api }
 
 export interface Transaction {
   id: number
@@ -32,6 +35,7 @@ export interface Transaction {
   updatedAt: string
   expiredAt: string | null
   confirmedAt: string | null
+  attendeeDetails?: AttendeeDetails
   event: {
     id: number
     title: string
@@ -52,11 +56,19 @@ export interface Transaction {
   } | null
 }
 
+export interface AttendeeDetails {
+  fullName: string
+  idType: 'KTP' | 'SIM' | 'PASSPORT'
+  idNumber: string
+  phone: string
+}
+
 export interface CreateTransactionRequest {
   eventId: number
   ticketCount: number
   pointsToUse: number
   voucherCode?: string
+  attendeeDetails?: AttendeeDetails
 }
 
 export const transactionApi = {

@@ -52,6 +52,39 @@ export class UserService {
     }
   }
 
+  // Validate personal coupon for transaction
+  static async validateCoupon(userId: number, code: string) {
+    const now = new Date()
+
+    const coupon = await prisma.coupon.findFirst({
+      where: {
+        userId,
+        code: code.toUpperCase(),
+        expiresAt: { gt: now },
+        isUsed: false,
+      },
+    })
+
+    if (!coupon) {
+      throw new Error('Invalid or expired coupon code')
+    }
+
+    return {
+      id: coupon.id,
+      code: coupon.code,
+      discount: coupon.discount,
+      expiresAt: coupon.expiresAt,
+    }
+  }
+
+  // Mark coupon as used
+  static async markCouponAsUsed(couponId: number) {
+    await prisma.coupon.update({
+      where: { id: couponId },
+      data: { isUsed: true },
+    })
+  }
+
   // Poin C: Update profile
   static async updateProfile(userId: number, data: {
     firstName?: string

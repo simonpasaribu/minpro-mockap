@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { TransactionService } from '../services/transaction.service'
 
 export class TransactionController {
@@ -6,14 +6,15 @@ export class TransactionController {
   static async createTransaction(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId
-      const { eventId, ticketCount, pointsToUse, voucherCode } = req.body
+      const { eventId, ticketCount, pointsToUse, voucherCode, attendeeDetails } = req.body
 
       const result = await TransactionService.createTransaction(
         userId,
         parseInt(eventId),
         parseInt(ticketCount),
         parseInt(pointsToUse || 0),
-        voucherCode
+        voucherCode,
+        attendeeDetails
       )
 
       res.status(201).json({
@@ -121,6 +122,66 @@ export class TransactionController {
         success: false,
         message: error.message || 'Failed to cancel transaction',
       })
+    }
+  }
+
+  // PUT /api/transactions/:id/payment-proof - Upload payment proof via backend
+  static async uploadPaymentProofBackend(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.userId
+      const transactionId = parseInt(req.params.id)
+
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' })
+      }
+
+      const { cloudinary } = await import('../utils/cloudinary')
+      const { prisma } = await import('../utils/prisma')
+      const fs = await import('fs')
+
+      // Verify transaction exists and belongs to user
+      const transaction = await prisma.transaction.findFirst({
+        where: { id: transactionId, userId: userId }
+      })
+
+      if (!transaction) {
+        fs.unlinkSync(req.file.path)
+        return res.status(404).json({ success: false, message: 'Transaction not found or unauthorized' })
+      }
+
+      // Upload to Cloudinary
+      const folderPath = `users/${userId}/transactions/${transactionId}`
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: folderPath,
+        public_id: `payment_${Date.now()}`,
+      })
+
+      // Delete temp file
+      fs.unlinkSync(req.file.path)
+
+      // Update transaction with payment proof URL
+      await prisma.transaction.update({
+        where: { id: transactionId },
+        data: {
+          paymentProofUrl: result.secure_url,
+          status: 'WAITING_CONFIRMATION'
+        }
+      })
+
+      res.status(200).json({
+        success: true,
+        message: 'Payment proof uploaded successfully',
+        data: { paymentProofUrl: result.secure_url }
+      })
+    } catch (error: any) {
+      // Clean up temp file if exists
+      if (req.file?.path) {
+        const fs = await import('fs')
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path)
+        }
+      }
+      next(error)
     }
   }
 }

@@ -36,6 +36,16 @@ export function EventCard({ event, onClick }: EventCardProps) {
             src={event.imageUrl}
             alt={event.title}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              // If image fails to load, show fallback
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              target.parentElement?.classList.add('bg-gradient-to-br', 'from-blue-400', 'to-purple-500')
+              const fallback = document.createElement('div')
+              fallback.className = 'w-full h-full flex items-center justify-center'
+              fallback.innerHTML = `<span class="text-white text-lg font-semibold">${event.title[0]}</span>`
+              target.parentElement?.appendChild(fallback)
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-purple-500">
@@ -73,14 +83,24 @@ export function EventCard({ event, onClick }: EventCardProps) {
           </div>
           <div className="flex items-center gap-2">
             <Ticket className="w-4 h-4" />
-            <span>{event._count.transactions} terjual</span>
+            <span>{event.totalSeats - event.availableSeats} terjual</span>
           </div>
         </div>
 
         {/* Organizer */}
         <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-medium text-gray-600">
-            {event.organizer.firstName[0]}
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {event.organizer.profilePicture ? (
+              <img
+                src={event.organizer.profilePicture}
+                alt={`${event.organizer.firstName} ${event.organizer.lastName}`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-300 text-sm font-medium text-gray-600">
+                {event.organizer.firstName[0]}
+              </div>
+            )}
           </div>
           <span className="text-sm text-gray-700">
             {event.organizer.firstName} {event.organizer.lastName}

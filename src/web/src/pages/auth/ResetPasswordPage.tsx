@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import api from '../../features/auth/services/auth.service'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
-  
+
   const [formData, setFormData] = useState({
     email: '',
     token: '',
@@ -13,6 +14,12 @@ export default function ResetPasswordPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   // Auto-fill token dan email dari sessionStorage (di-set oleh ForgotPasswordPage)
   useEffect(() => {
@@ -33,12 +40,12 @@ export default function ResetPasswordPage() {
     setError('')
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError('Passwords do not match')
+      setError('Kata sandi tidak cocok')
       return
     }
 
     if (formData.newPassword.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError('Kata sandi harus minimal 6 karakter')
       return
     }
 
@@ -55,7 +62,7 @@ export default function ResetPasswordPage() {
       sessionStorage.removeItem('resetEmail')
       navigate('/login', { state: { resetSuccess: true } })
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to reset password')
+      setError(err.response?.data?.message || 'Gagal mereset kata sandi')
     } finally {
       setLoading(false)
     }
@@ -66,103 +73,126 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden bg-[#faf4ff]">
-      {/* Background Image with gradient overlay */}
-      <div className="absolute inset-0">
-        <img
-          src="https://images.unsplash.com/photo-1633265486064-086b219458ec?auto=format&fit=crop&w=1800&q=80"
-          alt="Reset password background"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4a3fe2]/60 via-[#4a3fe2]/40 to-[#9795ff]/30 backdrop-blur-sm" />
-      </div>
+    <div className="min-h-screen bg-[#faf4ff] pb-16 sm:pb-20 pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#e2d7ff] text-[#4e339c] font-semibold hover:bg-[#d8caff] transition-colors mb-4 sm:mb-6 text-sm sm:text-base"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali</span>
+        </button>
 
-      {/* Card */}
-      <section className="relative flex h-full items-center justify-center px-6 py-8">
-        <div className="w-full max-w-lg rounded-2xl bg-white/90 p-8 backdrop-blur-xl md:p-10 max-h-[90vh] overflow-y-auto">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4a3fe2]">
-            Reset Password
-          </p>
+        <div className="flex items-center justify-center">
+          <div className="w-full max-w-md">
+            {/* Brand Identity */}
+            <div className="mb-6 sm:mb-10 text-center">
+              <span className="text-2xl sm:text-3xl font-black tracking-tighter text-[#4a3fe2]">
+                LearnHub
+              </span>
+            </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-[#32294f] md:text-4xl">
-            Create New Password
-          </h1>
-
-          <p className="mt-3 text-base leading-relaxed text-[#32294f]/70">
-            Enter your email and create a new password to reset your account.
-          </p>
+            {/* Glass Card */}
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 sm:p-10 shadow-[0_10px_40px_-10px_rgba(50,41,79,0.12)] border border-white/20">
+          <header className="mb-6 sm:mb-8">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#4a3fe2] block mb-2 sm:mb-3">
+              Pemulihan Akun
+            </span>
+            <h1 className="font-bold text-2xl sm:text-4xl text-[#32294f] tracking-tight leading-tight">
+              Kata Sandi Baru
+            </h1>
+            <p className="text-xs sm:text-sm text-[#5f557f] font-medium leading-relaxed mt-2 sm:mt-3">
+              Masukkan email dan buat kata sandi baru untuk mereset akun Anda.
+            </p>
+          </header>
 
           {error && (
-            <div className="mt-6 rounded-xl bg-[#4a3fe2]/5 px-4 py-3 text-sm text-[#32294f]">
+            <div className="rounded-xl bg-[#4a3fe2]/5 px-4 py-3 text-sm text-[#32294f]">
               {error}
             </div>
           )}
 
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#32294f]">
-                Email
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            {/* New Password */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-[#5f557f] px-1" htmlFor="new-password">
+                Kata Sandi Baru
               </label>
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full rounded-xl bg-[#faf4ff] px-4 py-3.5 text-sm text-[#32294f] outline-none transition focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20"
-                required
-              />
+              <div className="relative">
+                <input
+                  className="w-full bg-[#f5eeff] border-none rounded-xl px-5 py-4 text-sm text-[#32294f] placeholder:text-[#b2a6d5]/40 focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20 transition-all outline-none"
+                  id="new-password"
+                  name="newPassword"
+                  placeholder="••••••••"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={formData.newPassword}
+                  onChange={handleChange}
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f]/60 hover:text-[#4a3fe2] transition-colors"
+                >
+                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#32294f]">
-                New Password
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-[#5f557f] px-1" htmlFor="confirm-password">
+                Konfirmasi Kata Sandi
               </label>
-              <input
-                type="password"
-                name="newPassword"
-                placeholder="Enter new password (min 6 chars)"
-                value={formData.newPassword}
-                onChange={handleChange}
-                className="w-full rounded-xl bg-[#faf4ff] px-4 py-3.5 text-sm text-[#32294f] outline-none transition focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20"
-                required
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  className="w-full bg-[#f5eeff] border-none rounded-xl px-5 py-4 text-sm text-[#32294f] placeholder:text-[#b2a6d5]/40 focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20 transition-all outline-none"
+                  id="confirm-password"
+                  name="confirmPassword"
+                  placeholder="••••••••"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f]/60 hover:text-[#4a3fe2] transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#32294f]">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm new password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full rounded-xl bg-[#faf4ff] px-4 py-3.5 text-sm text-[#32294f] outline-none transition focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20"
-                required
-              />
+            {/* Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#4a3fe2] text-white font-bold py-4 rounded-full shadow-lg shadow-[#4a3fe2]/30 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Mereset...' : 'Reset Kata Sandi'}
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-full bg-[#4a3fe2] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#3a2fd2] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Resetting...' : 'Reset Password'}
-            </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-[#32294f]/70">
-            Didn't receive reset link?{' '}
-            <Link to="/forgot-password" className="font-semibold text-[#4a3fe2] hover:text-[#3a2fd2]">
-              Request again
+          {/* Footer Link */}
+          <footer className="mt-8 text-center">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#4a3fe2] hover:text-[#6249b2] transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Kembali ke masuk
             </Link>
-          </p>
+          </footer>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }

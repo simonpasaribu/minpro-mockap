@@ -12,6 +12,7 @@ interface Organizer {
   phone: string | null
   events: {
     id: number
+    slug: string
     title: string
     imageUrl: string | null
     startDate: string
@@ -41,7 +42,7 @@ interface Organizer {
 }
 
 export default function OrganizerProfilePage() {
-  const { id } = useParams<{ id: string }>()
+  const { username } = useParams<{ username: string }>()
   const navigate = useNavigate()
   const [organizer, setOrganizer] = useState<Organizer | null>(null)
   const [loading, setLoading] = useState(true)
@@ -49,11 +50,15 @@ export default function OrganizerProfilePage() {
   const [activeTab, setActiveTab] = useState<'events' | 'reviews'>('events')
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
     const fetchOrganizer = async () => {
-      if (!id) return
+      if (!username) return
       try {
         setLoading(true)
-        const response = await eventApi.getOrganizerProfile(parseInt(id))
+        const response = await eventApi.getOrganizerProfile(username)
         setOrganizer(response.data)
       } catch (err) {
         setError('Organizer tidak ditemukan')
@@ -63,7 +68,7 @@ export default function OrganizerProfilePage() {
     }
 
     fetchOrganizer()
-  }, [id])
+  }, [username])
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'Gratis'
@@ -99,26 +104,21 @@ export default function OrganizerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Kembali</span>
-          </button>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 pt-20">
+      {/* Back Button */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#e2d7ff] text-[#4e339c] font-semibold hover:bg-[#d8caff] transition-colors mb-4 sm:mb-6 text-sm sm:text-base"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Kembali</span>
+        </button>
         {/* Organizer Info Card */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <div className="flex flex-col md:flex-row items-center gap-6">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-8 mb-4 sm:mb-8">
+          <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6">
             {/* Avatar */}
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
               {organizer.profilePicture ? (
                 <img
                   src={organizer.profilePicture}
@@ -204,7 +204,7 @@ export default function OrganizerProfilePage() {
             {organizer.events.map((event) => (
               <div
                 key={event.id}
-                onClick={() => navigate(`/events/${event.id}`)}
+                onClick={() => navigate(`/events/${event.slug}`)}
                 className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
               >
                 {event.imageUrl ? (
