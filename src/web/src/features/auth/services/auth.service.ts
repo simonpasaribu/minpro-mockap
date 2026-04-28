@@ -42,6 +42,12 @@ export const authService = {
     return data.data
   },
 
+  upgradeToOrganizer: async () => {
+    const { data } = await api.post('/auth/upgrade-to-organizer')
+    console.log('API upgradeToOrganizer response:', data)
+    return data.data
+  },
+
   logout: () => {
     localStorage.removeItem('token')
   }

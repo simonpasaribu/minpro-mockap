@@ -23,6 +23,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Validate password length
+    if (formData.password.length < 8) {
+      setError('Kata sandi harus minimal 8 karakter')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -210,6 +217,7 @@ export default function RegisterPage() {
                     )}
                   </button>
                 </div>
+                <p className="text-xs text-[#5f557f]/70">Minimal 8 karakter</p>
               </div>
 
               {/* Referral */}
