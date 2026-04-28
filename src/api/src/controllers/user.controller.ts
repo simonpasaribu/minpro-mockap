@@ -43,6 +43,26 @@ export class UserController {
     }
   }
 
+  // POST /api/user/coupons/validate
+  static async validateCoupon(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+      const { code } = req.body
+
+      const result = await UserService.validateCoupon(userId, code)
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to validate coupon',
+      })
+    }
+  }
+
   // PUT /api/user/profile
   static async updateProfile(req: Request, res: Response) {
     try {

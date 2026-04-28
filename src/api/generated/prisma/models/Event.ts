@@ -45,8 +45,10 @@ export type EventSumAggregateOutputType = {
 export type EventMinAggregateOutputType = {
   id: number | null
   title: string | null
+  slug: string | null
   description: string | null
   location: string | null
+  eventLink: string | null
   category: $Enums.EventCategory | null
   price: number | null
   totalSeats: number | null
@@ -64,8 +66,10 @@ export type EventMinAggregateOutputType = {
 export type EventMaxAggregateOutputType = {
   id: number | null
   title: string | null
+  slug: string | null
   description: string | null
   location: string | null
+  eventLink: string | null
   category: $Enums.EventCategory | null
   price: number | null
   totalSeats: number | null
@@ -83,8 +87,10 @@ export type EventMaxAggregateOutputType = {
 export type EventCountAggregateOutputType = {
   id: number
   title: number
+  slug: number
   description: number
   location: number
+  eventLink: number
   category: number
   price: number
   totalSeats: number
@@ -120,8 +126,10 @@ export type EventSumAggregateInputType = {
 export type EventMinAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   description?: true
   location?: true
+  eventLink?: true
   category?: true
   price?: true
   totalSeats?: true
@@ -139,8 +147,10 @@ export type EventMinAggregateInputType = {
 export type EventMaxAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   description?: true
   location?: true
+  eventLink?: true
   category?: true
   price?: true
   totalSeats?: true
@@ -158,8 +168,10 @@ export type EventMaxAggregateInputType = {
 export type EventCountAggregateInputType = {
   id?: true
   title?: true
+  slug?: true
   description?: true
   location?: true
+  eventLink?: true
   category?: true
   price?: true
   totalSeats?: true
@@ -264,8 +276,10 @@ export type EventGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type EventGroupByOutputType = {
   id: number
   title: string
+  slug: string
   description: string | null
   location: string
+  eventLink: string | null
   category: $Enums.EventCategory
   price: number
   totalSeats: number
@@ -306,8 +320,10 @@ export type EventWhereInput = {
   NOT?: Prisma.EventWhereInput | Prisma.EventWhereInput[]
   id?: Prisma.IntFilter<"Event"> | number
   title?: Prisma.StringFilter<"Event"> | string
+  slug?: Prisma.StringFilter<"Event"> | string
   description?: Prisma.StringNullableFilter<"Event"> | string | null
   location?: Prisma.StringFilter<"Event"> | string
+  eventLink?: Prisma.StringNullableFilter<"Event"> | string | null
   category?: Prisma.EnumEventCategoryFilter<"Event"> | $Enums.EventCategory
   price?: Prisma.IntFilter<"Event"> | number
   totalSeats?: Prisma.IntFilter<"Event"> | number
@@ -329,8 +345,10 @@ export type EventWhereInput = {
 export type EventOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrder
+  eventLink?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   price?: Prisma.SortOrder
   totalSeats?: Prisma.SortOrder
@@ -351,12 +369,14 @@ export type EventOrderByWithRelationInput = {
 
 export type EventWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  slug?: string
   AND?: Prisma.EventWhereInput | Prisma.EventWhereInput[]
   OR?: Prisma.EventWhereInput[]
   NOT?: Prisma.EventWhereInput | Prisma.EventWhereInput[]
   title?: Prisma.StringFilter<"Event"> | string
   description?: Prisma.StringNullableFilter<"Event"> | string | null
   location?: Prisma.StringFilter<"Event"> | string
+  eventLink?: Prisma.StringNullableFilter<"Event"> | string | null
   category?: Prisma.EnumEventCategoryFilter<"Event"> | $Enums.EventCategory
   price?: Prisma.IntFilter<"Event"> | number
   totalSeats?: Prisma.IntFilter<"Event"> | number
@@ -373,13 +393,15 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   transactions?: Prisma.TransactionListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
   vouchers?: Prisma.EventVoucherListRelationFilter
-}, "id">
+}, "id" | "slug">
 
 export type EventOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrder
+  eventLink?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   price?: Prisma.SortOrder
   totalSeats?: Prisma.SortOrder
@@ -405,8 +427,10 @@ export type EventScalarWhereWithAggregatesInput = {
   NOT?: Prisma.EventScalarWhereWithAggregatesInput | Prisma.EventScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Event"> | number
   title?: Prisma.StringWithAggregatesFilter<"Event"> | string
+  slug?: Prisma.StringWithAggregatesFilter<"Event"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   location?: Prisma.StringWithAggregatesFilter<"Event"> | string
+  eventLink?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   category?: Prisma.EnumEventCategoryWithAggregatesFilter<"Event"> | $Enums.EventCategory
   price?: Prisma.IntWithAggregatesFilter<"Event"> | number
   totalSeats?: Prisma.IntWithAggregatesFilter<"Event"> | number
@@ -423,8 +447,10 @@ export type EventScalarWhereWithAggregatesInput = {
 
 export type EventCreateInput = {
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -445,8 +471,10 @@ export type EventCreateInput = {
 export type EventUncheckedCreateInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -466,8 +494,10 @@ export type EventUncheckedCreateInput = {
 
 export type EventUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -488,8 +518,10 @@ export type EventUpdateInput = {
 export type EventUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -510,8 +542,10 @@ export type EventUncheckedUpdateInput = {
 export type EventCreateManyInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -528,8 +562,10 @@ export type EventCreateManyInput = {
 
 export type EventUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -546,8 +582,10 @@ export type EventUpdateManyMutationInput = {
 export type EventUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -575,8 +613,10 @@ export type EventOrderByRelationAggregateInput = {
 export type EventCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   location?: Prisma.SortOrder
+  eventLink?: Prisma.SortOrder
   category?: Prisma.SortOrder
   price?: Prisma.SortOrder
   totalSeats?: Prisma.SortOrder
@@ -602,8 +642,10 @@ export type EventAvgOrderByAggregateInput = {
 export type EventMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   location?: Prisma.SortOrder
+  eventLink?: Prisma.SortOrder
   category?: Prisma.SortOrder
   price?: Prisma.SortOrder
   totalSeats?: Prisma.SortOrder
@@ -621,8 +663,10 @@ export type EventMaxOrderByAggregateInput = {
 export type EventMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  slug?: Prisma.SortOrder
   description?: Prisma.SortOrder
   location?: Prisma.SortOrder
+  eventLink?: Prisma.SortOrder
   category?: Prisma.SortOrder
   price?: Prisma.SortOrder
   totalSeats?: Prisma.SortOrder
@@ -740,8 +784,10 @@ export type EventUpdateOneRequiredWithoutReviewsNestedInput = {
 
 export type EventCreateWithoutOrganizerInput = {
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -761,8 +807,10 @@ export type EventCreateWithoutOrganizerInput = {
 export type EventUncheckedCreateWithoutOrganizerInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -811,8 +859,10 @@ export type EventScalarWhereInput = {
   NOT?: Prisma.EventScalarWhereInput | Prisma.EventScalarWhereInput[]
   id?: Prisma.IntFilter<"Event"> | number
   title?: Prisma.StringFilter<"Event"> | string
+  slug?: Prisma.StringFilter<"Event"> | string
   description?: Prisma.StringNullableFilter<"Event"> | string | null
   location?: Prisma.StringFilter<"Event"> | string
+  eventLink?: Prisma.StringNullableFilter<"Event"> | string | null
   category?: Prisma.EnumEventCategoryFilter<"Event"> | $Enums.EventCategory
   price?: Prisma.IntFilter<"Event"> | number
   totalSeats?: Prisma.IntFilter<"Event"> | number
@@ -829,8 +879,10 @@ export type EventScalarWhereInput = {
 
 export type EventCreateWithoutVouchersInput = {
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -850,8 +902,10 @@ export type EventCreateWithoutVouchersInput = {
 export type EventUncheckedCreateWithoutVouchersInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -886,8 +940,10 @@ export type EventUpdateToOneWithWhereWithoutVouchersInput = {
 
 export type EventUpdateWithoutVouchersInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -907,8 +963,10 @@ export type EventUpdateWithoutVouchersInput = {
 export type EventUncheckedUpdateWithoutVouchersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -927,8 +985,10 @@ export type EventUncheckedUpdateWithoutVouchersInput = {
 
 export type EventCreateWithoutTransactionsInput = {
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -948,8 +1008,10 @@ export type EventCreateWithoutTransactionsInput = {
 export type EventUncheckedCreateWithoutTransactionsInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -984,8 +1046,10 @@ export type EventUpdateToOneWithWhereWithoutTransactionsInput = {
 
 export type EventUpdateWithoutTransactionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1005,8 +1069,10 @@ export type EventUpdateWithoutTransactionsInput = {
 export type EventUncheckedUpdateWithoutTransactionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1025,8 +1091,10 @@ export type EventUncheckedUpdateWithoutTransactionsInput = {
 
 export type EventCreateWithoutReviewsInput = {
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -1046,8 +1114,10 @@ export type EventCreateWithoutReviewsInput = {
 export type EventUncheckedCreateWithoutReviewsInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -1082,8 +1152,10 @@ export type EventUpdateToOneWithWhereWithoutReviewsInput = {
 
 export type EventUpdateWithoutReviewsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1103,8 +1175,10 @@ export type EventUpdateWithoutReviewsInput = {
 export type EventUncheckedUpdateWithoutReviewsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1124,8 +1198,10 @@ export type EventUncheckedUpdateWithoutReviewsInput = {
 export type EventCreateManyOrganizerInput = {
   id?: number
   title: string
+  slug: string
   description?: string | null
   location: string
+  eventLink?: string | null
   category?: $Enums.EventCategory
   price?: number
   totalSeats: number
@@ -1141,8 +1217,10 @@ export type EventCreateManyOrganizerInput = {
 
 export type EventUpdateWithoutOrganizerInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1162,8 +1240,10 @@ export type EventUpdateWithoutOrganizerInput = {
 export type EventUncheckedUpdateWithoutOrganizerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1183,8 +1263,10 @@ export type EventUncheckedUpdateWithoutOrganizerInput = {
 export type EventUncheckedUpdateManyWithoutOrganizerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.StringFieldUpdateOperationsInput | string
+  eventLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.EnumEventCategoryFieldUpdateOperationsInput | $Enums.EventCategory
   price?: Prisma.IntFieldUpdateOperationsInput | number
   totalSeats?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1250,8 +1332,10 @@ export type EventCountOutputTypeCountVouchersArgs<ExtArgs extends runtime.Types.
 export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   description?: boolean
   location?: boolean
+  eventLink?: boolean
   category?: boolean
   price?: boolean
   totalSeats?: boolean
@@ -1274,8 +1358,10 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   description?: boolean
   location?: boolean
+  eventLink?: boolean
   category?: boolean
   price?: boolean
   totalSeats?: boolean
@@ -1294,8 +1380,10 @@ export type EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   title?: boolean
+  slug?: boolean
   description?: boolean
   location?: boolean
+  eventLink?: boolean
   category?: boolean
   price?: boolean
   totalSeats?: boolean
@@ -1314,8 +1402,10 @@ export type EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type EventSelectScalar = {
   id?: boolean
   title?: boolean
+  slug?: boolean
   description?: boolean
   location?: boolean
+  eventLink?: boolean
   category?: boolean
   price?: boolean
   totalSeats?: boolean
@@ -1330,7 +1420,7 @@ export type EventSelectScalar = {
   updatedAt?: boolean
 }
 
-export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "location" | "category" | "price" | "totalSeats" | "availableSeats" | "startDate" | "endDate" | "registrationDeadline" | "imageUrl" | "organizerId" | "isPublished" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
+export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "slug" | "description" | "location" | "eventLink" | "category" | "price" | "totalSeats" | "availableSeats" | "startDate" | "endDate" | "registrationDeadline" | "imageUrl" | "organizerId" | "isPublished" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
 export type EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organizer?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   transactions?: boolean | Prisma.Event$transactionsArgs<ExtArgs>
@@ -1356,8 +1446,10 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     title: string
+    slug: string
     description: string | null
     location: string
+    eventLink: string | null
     category: $Enums.EventCategory
     price: number
     totalSeats: number
@@ -1799,8 +1891,10 @@ export interface Prisma__EventClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface EventFieldRefs {
   readonly id: Prisma.FieldRef<"Event", 'Int'>
   readonly title: Prisma.FieldRef<"Event", 'String'>
+  readonly slug: Prisma.FieldRef<"Event", 'String'>
   readonly description: Prisma.FieldRef<"Event", 'String'>
   readonly location: Prisma.FieldRef<"Event", 'String'>
+  readonly eventLink: Prisma.FieldRef<"Event", 'String'>
   readonly category: Prisma.FieldRef<"Event", 'EventCategory'>
   readonly price: Prisma.FieldRef<"Event", 'Int'>
   readonly totalSeats: Prisma.FieldRef<"Event", 'Int'>

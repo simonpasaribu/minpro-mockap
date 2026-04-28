@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -39,6 +39,12 @@ export const authService = {
   getProfile: async () => {
     const { data } = await api.get('/auth/profile')
     console.log('API getProfile response:', data)
+    return data.data
+  },
+
+  upgradeToOrganizer: async () => {
+    const { data } = await api.post('/auth/upgrade-to-organizer')
+    console.log('API upgradeToOrganizer response:', data)
     return data.data
   },
 

@@ -8,7 +8,8 @@ export class TransactionService {
     eventId: number,
     ticketCount: number,
     pointsToUse: number,
-    voucherCode?: string
+    voucherCode?: string,
+    attendeeDetails?: { fullName: string; idType: string; idNumber: string; phone: string }
   ) {
     return await prisma.$transaction(async (tx) => {
       // Get event
@@ -51,13 +52,15 @@ export class TransactionService {
 
       let voucherDiscount = 0
       let validVoucherCode: string | null = null
+      let usedCouponId: number | null = null
 
-      // Validate and apply voucher - Nomor 1-D: Pricing & Promotions
+      // Validate and apply voucher/coupon - Nomor 1-D: Pricing & Promotions
       if (voucherCode && ticketPrice > 0) {
+        // First try to validate as event voucher
         const voucher = await tx.eventVoucher.findFirst({
           where: {
             eventId,
-            code: voucherCode,
+            code: voucherCode.toUpperCase(),
             expiresAt: { gt: new Date() },
             quota: { gt: tx.eventVoucher.fields.usedCount },
           },
@@ -72,11 +75,36 @@ export class TransactionService {
             where: { id: voucher.id },
             data: { usedCount: { increment: 1 } },
           })
+        } else {
+          // Try to validate as personal coupon
+          const coupon = await tx.coupon.findFirst({
+            where: {
+              userId,
+              code: voucherCode.toUpperCase(),
+              expiresAt: { gt: new Date() },
+              isUsed: false,
+            },
+          })
+
+          if (coupon) {
+            voucherDiscount = Math.floor((subtotal * coupon.discount) / 100)
+            validVoucherCode = coupon.code
+            usedCouponId = coupon.id
+
+            // Mark coupon as used
+            await tx.coupon.update({
+              where: { id: coupon.id },
+              data: { isUsed: true },
+            })
+          }
         }
       }
 
       // Calculate total
-      const totalAmount = Math.max(0, subtotal - pointsToUse - voucherDiscount)
+      const TAX_RATE = 0.11 // 11% PPN
+      const afterDiscount = Math.max(0, subtotal - pointsToUse - voucherDiscount)
+      const tax = Math.floor(afterDiscount * TAX_RATE)
+      const totalAmount = afterDiscount + tax
 
       // For free events
       const finalTotal = ticketPrice === 0 ? 0 : totalAmount
@@ -102,6 +130,9 @@ export class TransactionService {
       // Set expiration time (2 hours from now) - Nomor 2-B: Transaction Statuses
       const expiredAt = new Date(Date.now() + 2 * 60 * 60 * 1000)
 
+      // For free events, transaction is immediately DONE (no payment needed)
+      const isFreeEvent = ticketPrice === 0
+
       // Create transaction
       const transaction = await tx.transaction.create({
         data: {
@@ -114,10 +145,15 @@ export class TransactionService {
           voucherDiscount,
           totalAmount: finalTotal,
           voucherCode: validVoucherCode,
-          status: finalTotal === 0
-            ? TransactionStatus.WAITING_CONFIRMATION
+          status: isFreeEvent
+            ? TransactionStatus.DONE
             : TransactionStatus.WAITING_PAYMENT,
-          expiredAt: finalTotal === 0 ? null : expiredAt,
+          expiredAt: isFreeEvent ? null : expiredAt,
+          confirmedAt: isFreeEvent ? new Date() : null,
+          attendeeFullName: attendeeDetails?.fullName,
+          attendeeIdType: attendeeDetails?.idType,
+          attendeeIdNumber: attendeeDetails?.idNumber,
+          attendeePhone: attendeeDetails?.phone,
         },
         include: {
           event: {
@@ -127,10 +163,29 @@ export class TransactionService {
               location: true,
             },
           },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
         },
       })
 
-      return transaction
+      // Transform attendeeDetails to match frontend format
+      const attendeeDetailsResponse = attendeeDetails ? {
+        fullName: attendeeDetails.fullName,
+        idType: attendeeDetails.idType,
+        idNumber: attendeeDetails.idNumber,
+        phone: attendeeDetails.phone,
+      } : null
+
+      return {
+        ...transaction,
+        attendeeDetails: attendeeDetailsResponse,
+      }
     })
   }
 
@@ -199,6 +254,14 @@ export class TransactionService {
             },
           },
         },
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
         review: {
           select: {
             id: true,
@@ -210,7 +273,16 @@ export class TransactionService {
       orderBy: { createdAt: 'desc' },
     })
 
-    return transactions
+    // Transform attendeeDetails to match frontend format
+    return transactions.map(transaction => ({
+      ...transaction,
+      attendeeDetails: transaction.attendeeFullName ? {
+        fullName: transaction.attendeeFullName,
+        idType: transaction.attendeeIdType,
+        idNumber: transaction.attendeeIdNumber,
+        phone: transaction.attendeePhone,
+      } : null,
+    }))
   }
 
   // Get single transaction
@@ -248,11 +320,30 @@ export class TransactionService {
       throw new Error('Transaction not found')
     }
 
-    if (transaction.userId !== userId) {
+    // Allow access if user is the transaction owner OR the event organizer
+    if (transaction.userId !== userId && transaction.event.organizerId !== userId) {
       throw new Error('Unauthorized')
     }
 
-    return transaction
+    // Transform attendeeDetails to match frontend format
+    // Fallback to user profile data if transaction attendee details are missing
+    const attendeeDetails = (transaction.attendeeFullName || transaction.attendeeIdType || transaction.attendeeIdNumber || transaction.attendeePhone) ? {
+      fullName: transaction.attendeeFullName,
+      idType: transaction.attendeeIdType,
+      idNumber: transaction.attendeeIdNumber,
+      phone: transaction.attendeePhone,
+    } : {
+      // Fallback to user profile data
+      fullName: transaction.user.firstName + ' ' + transaction.user.lastName,
+      idType: null,
+      idNumber: null,
+      phone: transaction.user.phone || null,
+    }
+
+    return {
+      ...transaction,
+      attendeeDetails,
+    }
   }
 
   // Cancel transaction (customer cancels) - Nomor 2-D: Rollbacks
@@ -314,17 +405,38 @@ export class TransactionService {
 
       // Rollback: Restore voucher
       if (transaction.voucherCode) {
-        await tx.eventVoucher.updateMany({
+        // Check if it's an event voucher or personal coupon
+        const voucher = await tx.eventVoucher.findFirst({
           where: {
             eventId: transaction.eventId,
             code: transaction.voucherCode,
           },
-          data: {
-            usedCount: {
-              decrement: 1,
-            },
-          },
         })
+
+        if (voucher) {
+          await tx.eventVoucher.updateMany({
+            where: {
+              eventId: transaction.eventId,
+              code: transaction.voucherCode,
+            },
+            data: {
+              usedCount: {
+                decrement: 1,
+              },
+            },
+          })
+        } else {
+          // It's a personal coupon, restore it
+          await tx.coupon.updateMany({
+            where: {
+              userId: transaction.userId,
+              code: transaction.voucherCode,
+            },
+            data: {
+              isUsed: false,
+            },
+          })
+        }
       }
 
       // Update transaction status
@@ -385,17 +497,38 @@ export class TransactionService {
 
         // Rollback: Restore voucher
         if (transaction.voucherCode) {
-          await tx.eventVoucher.updateMany({
+          // Check if it's an event voucher or personal coupon
+          const voucher = await tx.eventVoucher.findFirst({
             where: {
               eventId: transaction.eventId,
               code: transaction.voucherCode,
             },
-            data: {
-              usedCount: {
-                decrement: 1,
-              },
-            },
           })
+
+          if (voucher) {
+            await tx.eventVoucher.updateMany({
+              where: {
+                eventId: transaction.eventId,
+                code: transaction.voucherCode,
+              },
+              data: {
+                usedCount: {
+                  decrement: 1,
+                },
+              },
+            })
+          } else {
+            // It's a personal coupon, restore it
+            await tx.coupon.updateMany({
+              where: {
+                userId: transaction.userId,
+                code: transaction.voucherCode,
+              },
+              data: {
+                isUsed: false,
+              },
+            })
+          }
         }
 
         // Update status
@@ -458,17 +591,38 @@ export class TransactionService {
 
         // Rollback: Restore voucher
         if (transaction.voucherCode) {
-          await tx.eventVoucher.updateMany({
+          // Check if it's an event voucher or personal coupon
+          const voucher = await tx.eventVoucher.findFirst({
             where: {
               eventId: transaction.eventId,
               code: transaction.voucherCode,
             },
-            data: {
-              usedCount: {
-                decrement: 1,
-              },
-            },
           })
+
+          if (voucher) {
+            await tx.eventVoucher.updateMany({
+              where: {
+                eventId: transaction.eventId,
+                code: transaction.voucherCode,
+              },
+              data: {
+                usedCount: {
+                  decrement: 1,
+                },
+              },
+            })
+          } else {
+            // It's a personal coupon, restore it
+            await tx.coupon.updateMany({
+              where: {
+                userId: transaction.userId,
+                code: transaction.voucherCode,
+              },
+              data: {
+                isUsed: false,
+              },
+            })
+          }
         }
 
         // Update status

@@ -79,9 +79,11 @@ export class OrganizerDashboardController {
         message: result.message,
       })
     } catch (error: any) {
+      console.error('acceptTransaction error:', error)
       res.status(400).json({
         success: false,
         message: error.message || 'Failed to accept transaction',
+        error: error.stack || String(error),
       })
     }
   }
@@ -106,13 +108,13 @@ export class OrganizerDashboardController {
     }
   }
 
-  // GET /api/organizer/events/:eventId/attendees - Get attendee list for event
+  // GET /api/organizer/events/:slug/attendees - Get attendee list for event
   static async getEventAttendees(req: Request, res: Response) {
     try {
-      const eventId = parseInt(req.params.eventId)
+      const slug = req.params.slug
       const organizerId = (req as any).user.userId
 
-      const result = await OrganizerDashboardService.getEventAttendees(eventId, organizerId)
+      const result = await OrganizerDashboardService.getEventAttendeesBySlug(slug, organizerId)
 
       res.status(200).json({
         success: true,
@@ -122,6 +124,57 @@ export class OrganizerDashboardController {
       res.status(400).json({
         success: false,
         message: error.message || 'Failed to get attendees',
+      })
+    }
+  }
+
+  // GET /api/organizer/statistics-chart - Get chart data with date filter
+  static async getStatisticsChart(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+      const filter = (req.query.filter as 'year' | 'month' | 'day') || 'month'
+
+      if (!['year', 'month', 'day'].includes(filter)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid filter. Must be year, month, or day',
+        })
+      }
+
+      const { chartData, summary } = await OrganizerDashboardService.getStatisticsChart(userId, filter)
+
+      res.status(200).json({
+        success: true,
+        data: {
+          chartData,
+          summary,
+        },
+      })
+    } catch (error: any) {
+      console.error('getStatisticsChart error:', error)
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get chart data',
+      })
+    }
+  }
+
+  // GET /api/organizer/daily-revenue-report - Get daily revenue report
+  static async getDailyRevenueReport(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+
+      const result = await OrganizerDashboardService.getDailyRevenueReport(userId)
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      })
+    } catch (error: any) {
+      console.error('getDailyRevenueReport error:', error)
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get daily revenue report',
       })
     }
   }

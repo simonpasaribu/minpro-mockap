@@ -40,6 +40,7 @@ export class PublicService {
       }
     }
 
+    console.log('Fetching events with where:', where)
     const events = await prisma.event.findMany({
       where,
       include: {
@@ -68,10 +69,10 @@ export class PublicService {
     return events
   }
 
-  // Get single event details (public view)
-  static async getEventDetails(eventId: number) {
+  // Get single event details by slug (public view)
+  static async getEventDetails(slug: string) {
     const event = await prisma.event.findUnique({
-      where: { id: eventId, isPublished: true },
+      where: { slug, isPublished: true },
       include: {
         organizer: {
           select: {
@@ -81,6 +82,7 @@ export class PublicService {
             email: true,
             profilePicture: true,
             phone: true,
+            username: true,
           },
         },
         vouchers: {
@@ -134,10 +136,10 @@ export class PublicService {
     }
   }
 
-  // Get public organizer profile with reviews
-  static async getOrganizerProfile(organizerId: number) {
+  // Get public organizer profile by username with reviews
+  static async getOrganizerProfile(username: string) {
     const organizer = await prisma.user.findUnique({
-      where: { id: organizerId, role: 'ORGANIZER' },
+      where: { username, role: 'ORGANIZER' },
       select: {
         id: true,
         firstName: true,

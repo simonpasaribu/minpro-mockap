@@ -1,0 +1,1070 @@
+{
+  "info": {
+    "name": "Event Management API - Complete Collection",
+    "description": "Postman Collection for Event Management Platform - All Features (Feature 1: SIMON & Feature 2: DIMAS)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "📁 AUTHENTICATION",
+      "item": [
+        {
+          "name": "POST Register (New User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Dimas\",\n  \"lastName\": \"Putra\",\n  \"email\": \"dimas@example.com\",\n  \"password\": \"password123\",\n  \"referralCode\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register new user. referralCode is optional. If provided, user gets 1 coupon and referrer gets 10,000 points."
+          }
+        },
+        {
+          "name": "POST Register (With Referral)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"New\",\n  \"lastName\": \"User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"referralCode\": \"DIMAS123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register with referral code. New user gets 1 coupon, referrer gets 10,000 points."
+          }
+        },
+        {
+          "name": "POST Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dimasaptr@gmail.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login to get JWT access token. Token is automatically saved to environment variable 'TOKEN'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract TOKEN from response and save to environment variable",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"TOKEN\", jsonData.data.token);",
+                  "    console.log(\"Token saved to environment variable: TOKEN\");",
+                  "    console.log(\"Token: \" + jsonData.data.token);",
+                  "} else if (jsonData.token) {",
+                  "    pm.environment.set(\"TOKEN\", jsonData.token);",
+                  "    console.log(\"Token saved to environment variable: TOKEN\");",
+                  "    console.log(\"Token: \" + jsonData.token);",
+                  "} else {",
+                  "    console.log(\"No token found in response. Response structure:\");",
+                  "    console.log(JSON.stringify(jsonData));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Validate Referral Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"TW1219E7\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/validate-referral",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "validate-referral"]
+            },
+            "description": "Validate if a referral code exists before registration"
+          }
+        },
+        {
+          "name": "POST Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dimasaptr@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/forgot-password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "forgot-password"]
+            },
+            "description": "Request password reset token. Token is automatically saved to environment variable 'RESET_TOKEN'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract resetToken from response and save to RESET_TOKEN environment variable",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.resetToken) {",
+                  "    pm.environment.set(\"RESET_TOKEN\", jsonData.data.resetToken);",
+                  "    console.log(\"Reset token saved to environment variable: RESET_TOKEN\");",
+                  "    console.log(\"Token: \" + jsonData.data.resetToken);",
+                  "} else {",
+                  "    console.log(\"No resetToken found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{RESET_TOKEN}}\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/reset-password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "reset-password"]
+            },
+            "description": "Reset password using token from forgot-password endpoint. Token is automatically taken from environment variable 'RESET_TOKEN'."
+          }
+        },
+        {
+          "name": "GET My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "POST Upgrade to Organizer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/upgrade-to-organizer",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "upgrade-to-organizer"]
+            },
+            "description": "Upgrade user role to ORGANIZER"
+          }
+        },
+        {
+          "name": "GET Role Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/role",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "role"]
+            },
+            "description": "Get current user role information"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 USER PROFILE & MANAGEMENT",
+      "item": [
+        {
+          "name": "GET My Points",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/points",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "points"]
+            },
+            "description": "Get user points balance (excluding expired points)"
+          }
+        },
+        {
+          "name": "GET My Coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/coupons",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "coupons"]
+            },
+            "description": "Get user coupons (excluding expired coupons)"
+          }
+        },
+        {
+          "name": "GET My Referrals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/referrals",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "referrals"]
+            },
+            "description": "Get list of users referred by current user"
+          }
+        },
+        {
+          "name": "PUT Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Dimas\",\n  \"lastName\": \"Putra Updated\",\n  \"phone\": \"081234567890\",\n  \"birthDate\": \"1990-01-01\",\n  \"gender\": \"MALE\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "profile"]
+            },
+            "description": "Update user profile information"
+          }
+        },
+        {
+          "name": "PUT Update Profile Picture",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "/path/to/your/profile-picture.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/profile-picture",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "profile-picture"]
+            },
+            "description": "Upload profile picture via Cloudinary (max 2MB)"
+          }
+        },
+        {
+          "name": "PUT Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "password"]
+            },
+            "description": "Change user password"
+          }
+        },
+        {
+          "name": "POST Upgrade to Organizer (User Route)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/user/upgrade-organizer",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "user", "upgrade-organizer"]
+            },
+            "description": "Upgrade user role to ORGANIZER"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 PUBLIC EVENTS (Feature 1 - SIMON)",
+      "item": [
+        {
+          "name": "GET Browse Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/events?category=MUSIC&location=Jakarta&search=concert&isFree=false",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "events"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "MUSIC",
+                  "description": "Filter by event category"
+                },
+                {
+                  "key": "location",
+                  "value": "Jakarta",
+                  "description": "Filter by location"
+                },
+                {
+                  "key": "search",
+                  "value": "concert",
+                  "description": "Search in title/description"
+                },
+                {
+                  "key": "isFree",
+                  "value": "false",
+                  "description": "Filter free/paid events"
+                }
+              ]
+            },
+            "description": "Browse all published events with optional filters"
+          }
+        },
+        {
+          "name": "GET Event Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/events/{{event_slug}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "events", "{{event_slug}}"]
+            },
+            "description": "Get single event details (public)"
+          }
+        },
+        {
+          "name": "GET Organizer Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizers/{{organizer_username}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizers", "{{organizer_username}}"]
+            },
+            "description": "Get public organizer profile with events and reviews"
+          }
+        },
+        {
+          "name": "GET Event Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/categories",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Get all event categories (MUSIC, SPORTS, TECHNOLOGY, etc.)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 TRANSACTIONS (Feature 1 - SIMON)",
+      "item": [
+        {
+          "name": "POST Create Transaction (Checkout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": {{event_id}},\n  \"ticketCount\": 2,\n  \"pointsUsed\": 5000,\n  \"voucherCode\": \"PROMO10\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/transactions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "transactions"]
+            },
+            "description": "Create new transaction (checkout). Can use points and voucher codes. System checks available seats."
+          }
+        },
+        {
+          "name": "GET My Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/transactions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "transactions"]
+            },
+            "description": "Get current user's transactions"
+          }
+        },
+        {
+          "name": "GET Transaction Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/transactions/{{transaction_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "transactions", "{{transaction_id}}"]
+            },
+            "description": "Get single transaction details"
+          }
+        },
+        {
+          "name": "PUT Upload Payment Proof",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "paymentProof",
+                  "type": "file",
+                  "src": "/path/to/your/payment-proof.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/transactions/{{transaction_id}}/payment-proof",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "transactions", "{{transaction_id}}", "payment-proof"]
+            },
+            "description": "Upload payment proof via Cloudinary. 2-hour timer from checkout."
+          }
+        },
+        {
+          "name": "PUT Cancel Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/transactions/{{transaction_id}}/cancel",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "transactions", "{{transaction_id}}", "cancel"]
+            },
+            "description": "Cancel transaction. Rollback: restores event seats, user points, and user vouchers."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 REVIEWS (Feature 1 - SIMON)",
+      "item": [
+        {
+          "name": "GET Event Reviews (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/reviews/event/{{event_slug}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "reviews", "event", "{{event_slug}}"]
+            },
+            "description": "Get all reviews for a specific event (public)"
+          }
+        },
+        {
+          "name": "POST Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": {{transaction_id}},\n  \"rating\": 5,\n  \"comment\": \"Great event! Highly recommended.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "reviews"]
+            },
+            "description": "Create review for a transaction. Only allowed if transaction is DONE and event has ended."
+          }
+        },
+        {
+          "name": "GET My Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/reviews/my-reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "reviews", "my-reviews"]
+            },
+            "description": "Get current user's reviews"
+          }
+        },
+        {
+          "name": "GET Can Review Transaction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/reviews/can-review/{{transaction_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "reviews", "can-review", "{{transaction_id}}"]
+            },
+            "description": "Check if user can review a specific transaction"
+          }
+        },
+        {
+          "name": "PUT Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review comment\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/reviews/{{review_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "reviews", "{{review_id}}"]
+            },
+            "description": "Update an existing review"
+          }
+        },
+        {
+          "name": "DELETE Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/reviews/{{review_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "reviews", "{{review_id}}"]
+            },
+            "description": "Delete a review"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 ORGANIZER DASHBOARD (Feature 2 - DIMAS)",
+      "item": [
+        {
+          "name": "GET Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/statistics?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "statistics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "description": "Filter start date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31",
+                  "description": "Filter end date"
+                }
+              ]
+            },
+            "description": "Get organizer statistics: total events, transactions, revenue, attendees, avg rating"
+          }
+        },
+        {
+          "name": "GET Pending Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/pending-transactions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "pending-transactions"]
+            },
+            "description": "Get all pending transactions (WAITING_CONFIRMATION status) with payment proof URLs"
+          }
+        },
+        {
+          "name": "GET All Organizer Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/transactions?status=DONE",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "transactions"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "DONE",
+                  "description": "Filter by status"
+                }
+              ]
+            },
+            "description": "Get all organizer transactions with optional filters (status)"
+          }
+        },
+        {
+          "name": "PUT Accept Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/transactions/{{transaction_id}}/accept",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "transactions", "{{transaction_id}}", "accept"]
+            },
+            "description": "Accept pending transaction. Sends email notification to user. Updates transaction status to DONE."
+          }
+        },
+        {
+          "name": "PUT Reject Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/transactions/{{transaction_id}}/reject",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "transactions", "{{transaction_id}}", "reject"]
+            },
+            "description": "Reject pending transaction. Sends email notification to user. Rollback: restores event seats, user points, and user vouchers."
+          }
+        },
+        {
+          "name": "GET Event Attendees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}/attendees",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}", "attendees"]
+            },
+            "description": "Get list of attendees for a specific event. Shows: user name, email, phone, ticket count, total amount"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 ORGANIZER EVENT MANAGEMENT (Feature 1 & 2)",
+      "item": [
+        {
+          "name": "POST Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tech Conference 2024\",\n  \"description\": \"Annual technology conference featuring the latest trends\",\n  \"location\": \"Online (Zoom)\",\n  \"eventLink\": \"https://zoom.us/j/123456789\",\n  \"category\": \"EDUCATION\",\n  \"price\": 500000,\n  \"totalSeats\": 100,\n  \"startDate\": \"2024-06-15T09:00:00+07:00\",\n  \"endDate\": \"2024-06-15T17:00:00+07:00\",\n  \"registrationDeadline\": \"2024-06-10T23:59:59+07:00\",\n  \"imageUrl\": \"https://res.cloudinary.com/your-cloud/image.jpg\",\n  \"isPublished\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events"]
+            },
+            "description": "Create new event. Image upload to Cloudinary via frontend."
+          }
+        },
+        {
+          "name": "GET My Events (Organizer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events"]
+            },
+            "description": "Get all events created by the current organizer"
+          }
+        },
+        {
+          "name": "GET Event Details (Organizer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}"]
+            },
+            "description": "Get single event details (organizer only)"
+          }
+        },
+        {
+          "name": "PUT Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Tech Conference 2024\",\n  \"description\": \"Updated description\",\n  \"location\": \"Jakarta Convention Center\",\n  \"eventLink\": \"https://zoom.us/j/123456789\",\n  \"price\": 600000,\n  \"isPublished\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}"]
+            },
+            "description": "Update event details"
+          }
+        },
+        {
+          "name": "DELETE Event",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}"]
+            },
+            "description": "Delete event. Only allowed if no transactions exist."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 VOUCHER MANAGEMENT (Feature 1 - SIMON)",
+      "item": [
+        {
+          "name": "POST Create Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PROMO10\",\n  \"discount\": 10,\n  \"quota\": 100,\n  \"expiresAt\": \"2024-12-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}/vouchers",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}", "vouchers"]
+            },
+            "description": "Create voucher for a specific event"
+          }
+        },
+        {
+          "name": "GET Event Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}/vouchers",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}", "vouchers"]
+            },
+            "description": "Get all vouchers for a specific event"
+          }
+        },
+        {
+          "name": "DELETE Voucher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/organizer/events/{{event_slug}}/vouchers/{{voucher_id}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "organizer", "events", "{{event_slug}}", "vouchers", "{{voucher_id}}"]
+            },
+            "description": "Delete a voucher"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "Backend API base URL"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token from login - will be set automatically after login"
+    },
+    {
+      "key": "event_id",
+      "value": "1",
+      "type": "string",
+      "description": "Event ID for testing"
+    },
+    {
+      "key": "transaction_id",
+      "value": "1",
+      "type": "string",
+      "description": "Transaction ID for testing"
+    },
+    {
+      "key": "organizer_id",
+      "value": "1",
+      "type": "string",
+      "description": "Organizer ID for testing"
+    },
+    {
+      "key": "review_id",
+      "value": "1",
+      "type": "string",
+      "description": "Review ID for testing"
+    },
+    {
+      "key": "voucher_id",
+      "value": "1",
+      "type": "string",
+      "description": "Voucher ID for testing"
+    }
+  ]
+}

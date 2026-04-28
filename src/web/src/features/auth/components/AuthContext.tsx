@@ -26,6 +26,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   logout: () => void
+  upgradeToOrganizer: () => Promise<void>
 }
 
 interface RegisterData {
@@ -81,6 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  const upgradeToOrganizer = async () => {
+    const response = await authService.upgradeToOrganizer()
+    console.log('Upgrade to organizer success:', response)
+    localStorage.setItem('token', response.token)
+    setUser(response.user)
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -89,7 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       register,
-      logout
+      logout,
+      upgradeToOrganizer
     }}>
       {children}
     </AuthContext.Provider>

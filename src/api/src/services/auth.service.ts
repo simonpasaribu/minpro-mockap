@@ -7,6 +7,11 @@ import { generateReferralCode } from '../utils/referral'
 import { RegisterInput, LoginInput, AuthResponse } from '../types'
 
 const SALT_ROUNDS = 10
+
+// Generate username from email (e.g., john@example.com -> john)
+function generateUsername(email: string): string {
+  return email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')
+}
 const REFERRAL_REWARD_POINTS = 10000
 const REFERRAL_REWARD_COUPON_DISCOUNT = 10
 const POINTS_EXPIRY_MONTHS = 3
@@ -51,6 +56,23 @@ export class AuthService {
       throw new Error('Failed to generate unique referral code')
     }
 
+    // Generate unique username
+    let baseUsername = generateUsername(email)
+    let uniqueUsername = baseUsername
+    let usernameAttempts = 0
+
+    while (usernameAttempts < 10) {
+      const existing = await prisma.user.findUnique({
+        where: { username: uniqueUsername },
+      })
+      if (!existing) {
+        break
+      } else {
+        uniqueUsername = `${baseUsername}${Math.floor(Math.random() * 1000)}`
+        usernameAttempts++
+      }
+    }
+
     // Prepare transaction
     const expiresAtPoints = new Date()
     expiresAtPoints.setMonth(expiresAtPoints.getMonth() + POINTS_EXPIRY_MONTHS)
@@ -83,6 +105,7 @@ export class AuthService {
       const user = await tx.user.create({
         data: {
           email,
+          username: uniqueUsername,
           password: hashedPassword,
           firstName,
           lastName,
@@ -256,7 +279,17 @@ export class AuthService {
       },
     })
 
-    return updatedUser
+    // Generate new token with updated role
+    const newToken = generateToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+    })
+
+    return {
+      user: updatedUser,
+      token: newToken,
+    }
   }
 
   // Get user role info
