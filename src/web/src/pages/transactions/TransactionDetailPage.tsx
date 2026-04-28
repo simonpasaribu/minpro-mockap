@@ -202,7 +202,13 @@ export default function TransactionDetailPage() {
       setSelectedFile(null)
     } catch (err: any) {
       console.error('Upload error:', err)
-      setError(err.message || 'Gagal mengunggah bukti pembayaran')
+      const errorMessage = err.response?.data?.message || 'Gagal upload bukti pembayaran'
+      // Add helpful message for tracking prevention issues
+      if (errorMessage.includes('blocked') || errorMessage.includes('storage')) {
+        setError('Upload gagal karena browser memblokir akses ke Cloudinary. Matikan "Prevent Cross-Site Tracking" di Safari atau gunakan browser lain (Chrome/Firefox).')
+      } else {
+        setError(errorMessage)
+      }
     } finally {
       setUploading(false)
     }

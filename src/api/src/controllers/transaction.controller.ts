@@ -154,6 +154,8 @@ export class TransactionController {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: folderPath,
         public_id: `payment_${Date.now()}`,
+        resource_type: 'auto',
+        overwrite: true,
       })
 
       // Delete temp file
