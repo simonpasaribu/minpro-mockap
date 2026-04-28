@@ -1,5 +1,6 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { PublicService } from '../services/public.service'
+import { EventService } from '../services/event.service'
 
 export class PublicController {
   // GET /api/events - Get all published events with filters
@@ -28,11 +29,11 @@ export class PublicController {
     }
   }
 
-  // GET /api/events/:id - Get single event details (public)
+  // GET /api/events/:slug - Get single event details by slug (public)
   static async getEventDetails(req: Request, res: Response) {
     try {
-      const eventId = parseInt(req.params.id)
-      const result = await PublicService.getEventDetails(eventId)
+      const slug = req.params.slug
+      const result = await PublicService.getEventDetails(slug)
 
       res.status(200).json({
         success: true,
@@ -46,11 +47,11 @@ export class PublicController {
     }
   }
 
-  // GET /api/organizers/:id - Get public organizer profile
+  // GET /api/organizers/:username - Get public organizer profile by username
   static async getOrganizerProfile(req: Request, res: Response) {
     try {
-      const organizerId = parseInt(req.params.id)
-      const result = await PublicService.getOrganizerProfile(organizerId)
+      const username = req.params.username
+      const result = await PublicService.getOrganizerProfile(username)
 
       res.status(200).json({
         success: true,
@@ -78,6 +79,64 @@ export class PublicController {
         success: false,
         message: error.message || 'Failed to get categories',
       })
+    }
+  }
+
+  // GET /api/events/stats - Get public platform statistics
+  static async getPublicStats(req: Request, res: Response) {
+    try {
+      const result = await EventService.getPublicStats()
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get statistics',
+      })
+      next(error)
+    }
+  }
+
+  // GET /api/events/popular - Get popular events
+  static async getPopularEvents(req: Request, res: Response, next: NextFunction) {
+    try {
+      const limit = parseInt(req.query.limit as string) || 8
+      const { prisma } = await import('../utils/prisma')
+      
+      const popularEvents = await prisma.event.findMany({
+        where: {
+          isPublished: true,
+          endDate: {
+            gte: new Date()
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          imageUrl: true,
+          startDate: true,
+          endDate: true,
+          price: true,
+          totalSeats: true,
+          category: true,
+          createdAt: true
+        }
+      })
+
+      res.status(200).json({
+        success: true,
+        data: popularEvents,
+      })
+    } catch (error) {
+      next(error)
     }
   }
 }

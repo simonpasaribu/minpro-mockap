@@ -11,6 +11,9 @@ const router = Router()
 // Get event reviews (public)
 router.get('/event/:eventId', ReviewController.getEventReviews)
 
+// Get event reviews by slug (public - for event detail page)
+router.get('/event/by-slug/:slug', ReviewController.getEventReviewsBySlug)
+
 // ============================================
 // PROTECTED ROUTES
 // ============================================
@@ -31,5 +34,11 @@ router.put('/:id', ReviewController.updateReview)
 
 // Delete review
 router.delete('/:id', ReviewController.deleteReview)
+
+// Respond to review (organizer only)
+router.post('/:id/respond', ReviewController.respondToReview)
+
+// Get organizer's reviews
+router.get('/organizer', ReviewController.getOrganizerReviews)
 
 export default router

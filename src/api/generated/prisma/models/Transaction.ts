@@ -62,6 +62,10 @@ export type TransactionMinAggregateOutputType = {
   totalAmount: number | null
   voucherCode: string | null
   paymentProofUrl: string | null
+  attendeeFullName: string | null
+  attendeeIdType: string | null
+  attendeeIdNumber: string | null
+  attendeePhone: string | null
   status: $Enums.TransactionStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -81,6 +85,10 @@ export type TransactionMaxAggregateOutputType = {
   totalAmount: number | null
   voucherCode: string | null
   paymentProofUrl: string | null
+  attendeeFullName: string | null
+  attendeeIdType: string | null
+  attendeeIdNumber: string | null
+  attendeePhone: string | null
   status: $Enums.TransactionStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -100,6 +108,10 @@ export type TransactionCountAggregateOutputType = {
   totalAmount: number
   voucherCode: number
   paymentProofUrl: number
+  attendeeFullName: number
+  attendeeIdType: number
+  attendeeIdNumber: number
+  attendeePhone: number
   status: number
   createdAt: number
   updatedAt: number
@@ -145,6 +157,10 @@ export type TransactionMinAggregateInputType = {
   totalAmount?: true
   voucherCode?: true
   paymentProofUrl?: true
+  attendeeFullName?: true
+  attendeeIdType?: true
+  attendeeIdNumber?: true
+  attendeePhone?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -164,6 +180,10 @@ export type TransactionMaxAggregateInputType = {
   totalAmount?: true
   voucherCode?: true
   paymentProofUrl?: true
+  attendeeFullName?: true
+  attendeeIdType?: true
+  attendeeIdNumber?: true
+  attendeePhone?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -183,6 +203,10 @@ export type TransactionCountAggregateInputType = {
   totalAmount?: true
   voucherCode?: true
   paymentProofUrl?: true
+  attendeeFullName?: true
+  attendeeIdType?: true
+  attendeeIdNumber?: true
+  attendeePhone?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -289,6 +313,10 @@ export type TransactionGroupByOutputType = {
   totalAmount: number
   voucherCode: string | null
   paymentProofUrl: string | null
+  attendeeFullName: string | null
+  attendeeIdType: string | null
+  attendeeIdNumber: string | null
+  attendeePhone: string | null
   status: $Enums.TransactionStatus
   createdAt: Date
   updatedAt: Date
@@ -331,6 +359,10 @@ export type TransactionWhereInput = {
   totalAmount?: Prisma.IntFilter<"Transaction"> | number
   voucherCode?: Prisma.StringNullableFilter<"Transaction"> | string | null
   paymentProofUrl?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeFullName?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeIdType?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeIdNumber?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeePhone?: Prisma.StringNullableFilter<"Transaction"> | string | null
   status?: Prisma.EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
@@ -353,6 +385,10 @@ export type TransactionOrderByWithRelationInput = {
   totalAmount?: Prisma.SortOrder
   voucherCode?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeeFullName?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeeIdType?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeeIdNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeePhone?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -378,6 +414,10 @@ export type TransactionWhereUniqueInput = Prisma.AtLeast<{
   totalAmount?: Prisma.IntFilter<"Transaction"> | number
   voucherCode?: Prisma.StringNullableFilter<"Transaction"> | string | null
   paymentProofUrl?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeFullName?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeIdType?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeIdNumber?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeePhone?: Prisma.StringNullableFilter<"Transaction"> | string | null
   status?: Prisma.EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
@@ -400,6 +440,10 @@ export type TransactionOrderByWithAggregationInput = {
   totalAmount?: Prisma.SortOrder
   voucherCode?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeeFullName?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeeIdType?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeeIdNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  attendeePhone?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -427,6 +471,10 @@ export type TransactionScalarWhereWithAggregatesInput = {
   totalAmount?: Prisma.IntWithAggregatesFilter<"Transaction"> | number
   voucherCode?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
   paymentProofUrl?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
+  attendeeFullName?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
+  attendeeIdType?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
+  attendeeIdNumber?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
+  attendeePhone?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
   status?: Prisma.EnumTransactionStatusWithAggregatesFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Transaction"> | Date | string
@@ -443,6 +491,10 @@ export type TransactionCreateInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -465,6 +517,10 @@ export type TransactionUncheckedCreateInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -482,6 +538,10 @@ export type TransactionUpdateInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -504,6 +564,10 @@ export type TransactionUncheckedUpdateInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -524,6 +588,10 @@ export type TransactionCreateManyInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -540,6 +608,10 @@ export type TransactionUpdateManyMutationInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -559,6 +631,10 @@ export type TransactionUncheckedUpdateManyInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -588,6 +664,10 @@ export type TransactionCountOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
   voucherCode?: Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrder
+  attendeeFullName?: Prisma.SortOrder
+  attendeeIdType?: Prisma.SortOrder
+  attendeeIdNumber?: Prisma.SortOrder
+  attendeePhone?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -619,6 +699,10 @@ export type TransactionMaxOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
   voucherCode?: Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrder
+  attendeeFullName?: Prisma.SortOrder
+  attendeeIdType?: Prisma.SortOrder
+  attendeeIdNumber?: Prisma.SortOrder
+  attendeePhone?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -638,6 +722,10 @@ export type TransactionMinOrderByAggregateInput = {
   totalAmount?: Prisma.SortOrder
   voucherCode?: Prisma.SortOrder
   paymentProofUrl?: Prisma.SortOrder
+  attendeeFullName?: Prisma.SortOrder
+  attendeeIdType?: Prisma.SortOrder
+  attendeeIdNumber?: Prisma.SortOrder
+  attendeePhone?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -773,6 +861,10 @@ export type TransactionCreateWithoutUserInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -793,6 +885,10 @@ export type TransactionUncheckedCreateWithoutUserInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -842,6 +938,10 @@ export type TransactionScalarWhereInput = {
   totalAmount?: Prisma.IntFilter<"Transaction"> | number
   voucherCode?: Prisma.StringNullableFilter<"Transaction"> | string | null
   paymentProofUrl?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeFullName?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeIdType?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeeIdNumber?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  attendeePhone?: Prisma.StringNullableFilter<"Transaction"> | string | null
   status?: Prisma.EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
@@ -858,6 +958,10 @@ export type TransactionCreateWithoutEventInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -878,6 +982,10 @@ export type TransactionUncheckedCreateWithoutEventInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -921,6 +1029,10 @@ export type TransactionCreateWithoutReviewInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -942,6 +1054,10 @@ export type TransactionUncheckedCreateWithoutReviewInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -974,6 +1090,10 @@ export type TransactionUpdateWithoutReviewInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -995,6 +1115,10 @@ export type TransactionUncheckedUpdateWithoutReviewInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1013,6 +1137,10 @@ export type TransactionCreateManyUserInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1029,6 +1157,10 @@ export type TransactionUpdateWithoutUserInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1049,6 +1181,10 @@ export type TransactionUncheckedUpdateWithoutUserInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1068,6 +1204,10 @@ export type TransactionUncheckedUpdateManyWithoutUserInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1086,6 +1226,10 @@ export type TransactionCreateManyEventInput = {
   totalAmount: number
   voucherCode?: string | null
   paymentProofUrl?: string | null
+  attendeeFullName?: string | null
+  attendeeIdType?: string | null
+  attendeeIdNumber?: string | null
+  attendeePhone?: string | null
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1102,6 +1246,10 @@ export type TransactionUpdateWithoutEventInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1122,6 +1270,10 @@ export type TransactionUncheckedUpdateWithoutEventInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1141,6 +1293,10 @@ export type TransactionUncheckedUpdateManyWithoutEventInput = {
   totalAmount?: Prisma.IntFieldUpdateOperationsInput | number
   voucherCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeFullName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeeIdNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attendeePhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1162,6 +1318,10 @@ export type TransactionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   totalAmount?: boolean
   voucherCode?: boolean
   paymentProofUrl?: boolean
+  attendeeFullName?: boolean
+  attendeeIdType?: boolean
+  attendeeIdNumber?: boolean
+  attendeePhone?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1184,6 +1344,10 @@ export type TransactionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   totalAmount?: boolean
   voucherCode?: boolean
   paymentProofUrl?: boolean
+  attendeeFullName?: boolean
+  attendeeIdType?: boolean
+  attendeeIdNumber?: boolean
+  attendeePhone?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1205,6 +1369,10 @@ export type TransactionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   totalAmount?: boolean
   voucherCode?: boolean
   paymentProofUrl?: boolean
+  attendeeFullName?: boolean
+  attendeeIdType?: boolean
+  attendeeIdNumber?: boolean
+  attendeePhone?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1226,6 +1394,10 @@ export type TransactionSelectScalar = {
   totalAmount?: boolean
   voucherCode?: boolean
   paymentProofUrl?: boolean
+  attendeeFullName?: boolean
+  attendeeIdType?: boolean
+  attendeeIdNumber?: boolean
+  attendeePhone?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1233,7 +1405,7 @@ export type TransactionSelectScalar = {
   confirmedAt?: boolean
 }
 
-export type TransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "eventId" | "ticketCount" | "ticketPrice" | "subtotal" | "pointsUsed" | "voucherDiscount" | "totalAmount" | "voucherCode" | "paymentProofUrl" | "status" | "createdAt" | "updatedAt" | "expiredAt" | "confirmedAt", ExtArgs["result"]["transaction"]>
+export type TransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "eventId" | "ticketCount" | "ticketPrice" | "subtotal" | "pointsUsed" | "voucherDiscount" | "totalAmount" | "voucherCode" | "paymentProofUrl" | "attendeeFullName" | "attendeeIdType" | "attendeeIdNumber" | "attendeePhone" | "status" | "createdAt" | "updatedAt" | "expiredAt" | "confirmedAt", ExtArgs["result"]["transaction"]>
 export type TransactionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
@@ -1267,6 +1439,10 @@ export type $TransactionPayload<ExtArgs extends runtime.Types.Extensions.Interna
     totalAmount: number
     voucherCode: string | null
     paymentProofUrl: string | null
+    attendeeFullName: string | null
+    attendeeIdType: string | null
+    attendeeIdNumber: string | null
+    attendeePhone: string | null
     status: $Enums.TransactionStatus
     createdAt: Date
     updatedAt: Date
@@ -1709,6 +1885,10 @@ export interface TransactionFieldRefs {
   readonly totalAmount: Prisma.FieldRef<"Transaction", 'Int'>
   readonly voucherCode: Prisma.FieldRef<"Transaction", 'String'>
   readonly paymentProofUrl: Prisma.FieldRef<"Transaction", 'String'>
+  readonly attendeeFullName: Prisma.FieldRef<"Transaction", 'String'>
+  readonly attendeeIdType: Prisma.FieldRef<"Transaction", 'String'>
+  readonly attendeeIdNumber: Prisma.FieldRef<"Transaction", 'String'>
+  readonly attendeePhone: Prisma.FieldRef<"Transaction", 'String'>
   readonly status: Prisma.FieldRef<"Transaction", 'TransactionStatus'>
   readonly createdAt: Prisma.FieldRef<"Transaction", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Transaction", 'DateTime'>

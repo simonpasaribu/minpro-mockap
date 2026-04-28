@@ -22,6 +22,7 @@ const upload = multer({
 // Protected routes
 router.get('/points', authenticateToken, UserController.getPoints)
 router.get('/coupons', authenticateToken, UserController.getCoupons)
+router.post('/coupons/validate', authenticateToken, UserController.validateCoupon)
 router.get('/referrals', authenticateToken, UserController.getReferrals)
 
 // Profile Management

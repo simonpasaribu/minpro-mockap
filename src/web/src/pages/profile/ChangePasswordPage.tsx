@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/components/AuthContext'
+import { Shield, Eye, EyeOff, CheckCircle, Info } from 'lucide-react'
 import api from '../../features/auth/services/auth.service'
 
 export default function ChangePasswordPage() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const [formData, setFormData] = useState({
     oldPassword: '',
@@ -15,18 +20,22 @@ export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showOldPassword, setShowOldPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError('New passwords do not match')
+      setError('Kata sandi baru tidak cocok')
       return
     }
 
     if (formData.newPassword.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError('Kata sandi harus minimal 8 karakter')
       return
     }
 
@@ -39,7 +48,7 @@ export default function ChangePasswordPage() {
       })
       setSuccess(true)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to change password')
+      setError(err.response?.data?.message || 'Gagal mengubah kata sandi')
     } finally {
       setLoading(false)
     }
@@ -54,116 +63,197 @@ export default function ChangePasswordPage() {
     navigate('/login')
   }
 
+  const handleCancel = () => {
+    // Check if form has any data
+    if (formData.oldPassword || formData.newPassword || formData.confirmPassword) {
+      setShowCancelModal(true)
+    } else {
+      navigate('/profile')
+    }
+  }
+
+  const confirmCancel = () => {
+    setShowCancelModal(false)
+    setFormData({ oldPassword: '', newPassword: '', confirmPassword: '' })
+    navigate('/profile')
+  }
+
   return (
-    <main className="min-h-screen bg-[#faf4ff] px-4 py-10">
-      <div className="mx-auto max-w-lg">
-        {/* Header */}
-        <section className="mb-6 rounded-2xl bg-white p-6 shadow-[0_10px_40px_-10px_rgba(50,41,79,0.04)]">
-          <h1 className="text-2xl font-bold text-[#32294f] md:text-3xl">
-            Change Password
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-[#32294f]/70">
-            Update your password to keep your account secure.
-          </p>
-        </section>
+    <div className="min-h-screen bg-[#faf4ff] pb-16 sm:pb-20 pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#e2d7ff] text-[#4e339c] font-semibold hover:bg-[#d8caff] transition-colors mb-4 sm:mb-6 text-sm sm:text-base"
+        >
+          <Shield className="w-4 h-4" />
+          <span className="hidden sm:inline">Kembali</span>
+        </button>
 
-        {/* Success State */}
-        {success ? (
-          <section className="rounded-2xl bg-white p-6 shadow-[0_10px_40px_-10px_rgba(50,41,79,0.04)] text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#4a3fe2]/10">
-              <svg className="h-10 w-10 text-[#4a3fe2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+        <div className="flex items-center justify-center">
+          <div className="max-w-2xl w-full space-y-4 sm:space-y-6">
+          {/* Title Card */}
+          <section className="bg-white/80 backdrop-blur-xl rounded-xl p-4 sm:p-8 shadow-2xl border border-white/20">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#32294f] mb-1 sm:mb-2">Ubah Kata Sandi</h2>
+                <p className="text-xs sm:text-sm text-[#5f557f] max-w-md leading-relaxed">
+                  Pastikan akun Anda tetap aman dengan memperbarui kata sandi secara berkala. Gunakan kombinasi karakter yang kuat dan unik.
+                </p>
+              </div>
+              <div className="bg-[#9795ff]/20 p-3 sm:p-4 rounded-xl flex-shrink-0">
+                <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-[#4a3fe2]" />
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-[#32294f]">
-              Password Changed Successfully
-            </h2>
-            <p className="mt-2 text-[#32294f]/70">
-              Please log in again with your new password.
-            </p>
-            <button
-              onClick={handleSuccess}
-              className="mt-6 w-full rounded-full bg-[#4a3fe2] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#3a2fd2]"
-            >
-              Back to Login
-            </button>
           </section>
-        ) : (
-          /* Form */
-          <section className="rounded-2xl bg-white p-6 shadow-[0_10px_40px_-10px_rgba(50,41,79,0.04)]">
-            {error && (
-              <div className="mb-6 rounded-xl bg-[#4a3fe2]/5 px-4 py-3 text-sm text-[#32294f]">
-                {error}
-              </div>
-            )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#32294f]">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  name="oldPassword"
-                  placeholder="Enter current password"
-                  value={formData.oldPassword}
-                  onChange={handleChange}
-                  className="w-full rounded-xl bg-[#faf4ff] px-4 py-3.5 text-sm text-[#32294f] outline-none transition focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20"
-                  required
-                />
-              </div>
+          {/* Form Card */}
+          {!success ? (
+            <section className="bg-white/80 backdrop-blur-xl rounded-xl p-4 sm:p-8 shadow-2xl border border-white/20">
+              {error && (
+                <div className="mb-4 sm:mb-6 rounded-xl bg-[#fd8bca]/10 px-4 py-3 text-sm text-[#983772]">
+                  {error}
+                </div>
+              )}
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#32294f]">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  name="newPassword"
-                  placeholder="Enter new password (min 8 chars)"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  className="w-full rounded-xl bg-[#faf4ff] px-4 py-3.5 text-sm text-[#32294f] outline-none transition focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20"
-                  required
-                  minLength={8}
-                />
-              </div>
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-8">
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Old Password */}
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-[#5f557f] mb-2">Kata Sandi Lama</label>
+                    <div className="relative">
+                      <input
+                        type={showOldPassword ? 'text' : 'password'}
+                        name="oldPassword"
+                        placeholder="••••••••"
+                        value={formData.oldPassword}
+                        onChange={handleChange}
+                        className="w-full bg-[#f5eeff]/50 border border-[#b2a6d5]/30 rounded-lg px-4 py-4 text-[#32294f] focus:ring-2 focus:ring-[#4a3fe2]/20 transition-all outline-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOldPassword(!showOldPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f] hover:text-[#32294f] transition-colors"
+                      >
+                        {showOldPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#32294f]">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm new password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full rounded-xl bg-[#faf4ff] px-4 py-3.5 text-sm text-[#32294f] outline-none transition focus:bg-white focus:ring-2 focus:ring-[#4a3fe2]/20"
-                  required
-                />
-              </div>
+                  {/* New Password */}
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-[#5f557f] mb-2">Kata Sandi Baru</label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        name="newPassword"
+                        placeholder="••••••••"
+                        value={formData.newPassword}
+                        onChange={handleChange}
+                        className="w-full bg-[#f5eeff]/50 border border-[#b2a6d5]/30 rounded-lg px-4 py-4 text-[#32294f] focus:ring-2 focus:ring-[#4a3fe2]/20 transition-all outline-none"
+                        required
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f] hover:text-[#32294f] transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-[#5f557f] flex items-center gap-1">
+                      <Info className="w-3.5 h-3.5" />
+                      <span>Minimal 8 karakter dengan kombinasi huruf dan angka.</span>
+                    </p>
+                  </div>
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate('/profile')}
-                  className="flex-1 rounded-full bg-[#faf4ff] px-6 py-3.5 text-sm font-semibold text-[#32294f] transition hover:bg-[#4a3fe2]/10"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 rounded-full bg-[#4a3fe2] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#3a2fd2] disabled:opacity-50"
-                >
-                  {loading ? 'Changing...' : 'Change Password'}
-                </button>
+                  {/* Confirm Password */}
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-[#5f557f] mb-2">Konfirmasi Kata Sandi Baru</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        name="confirmPassword"
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="w-full bg-[#f5eeff]/50 border border-[#b2a6d5]/30 rounded-lg px-4 py-4 text-[#32294f] focus:ring-2 focus:ring-[#4a3fe2]/20 transition-all outline-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f] hover:text-[#32294f] transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="px-8 py-3 rounded-full text-[#6249b2] font-bold hover:bg-[#d8caff] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-8 py-3 rounded-full bg-[#4a3fe2] text-white font-bold shadow-xl shadow-[#4a3fe2]/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {loading ? 'Mengubah...' : 'Ubah Kata Sandi'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          ) : (
+            /* Success Modal */
+            <section className="bg-white/80 backdrop-blur-xl rounded-xl p-8 shadow-2xl border border-white/20 text-center">
+              <div className="w-20 h-20 bg-[#9795ff]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-12 h-12 text-[#4a3fe2] fill-[#4a3fe2]" />
               </div>
-            </form>
-          </section>
-        )}
+              <h3 className="text-2xl font-extrabold text-[#32294f] mb-3">Kata Sandi Berhasil Diubah</h3>
+              <p className="text-[#5f557f] mb-8">Keamanan akun Anda telah diperbarui. Silakan gunakan kata sandi baru untuk masuk berikutnya.</p>
+              <button
+                onClick={handleSuccess}
+                className="w-full py-4 bg-[#4a3fe2] text-white rounded-full font-bold hover:brightness-110 transition-all shadow-lg shadow-[#4a3fe2]/20"
+              >
+                Kembali ke Masuk
+              </button>
+            </section>
+          )}
+        </div>
       </div>
-    </main>
+    </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#32294f]/40 backdrop-blur-md">
+          <div className="bg-white max-w-sm w-full rounded-xl p-10 text-center shadow-2xl">
+            <h3 className="text-xl font-extrabold text-[#32294f] mb-3">Batalkan Perubahan?</h3>
+            <p className="text-[#5f557f] mb-8">Perubahan yang Anda buat akan hilang. Apakah Anda yakin ingin membatalkan?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 py-3 rounded-full text-[#6249b2] font-bold hover:bg-[#d8caff] transition-colors"
+              >
+                Tidak
+              </button>
+              <button
+                onClick={confirmCancel}
+                className="flex-1 py-3 rounded-full bg-[#4a3fe2] text-white font-bold hover:brightness-110 transition-all shadow-lg shadow-[#4a3fe2]/20"
+              >
+                Ya, Batalkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

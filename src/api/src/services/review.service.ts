@@ -239,4 +239,143 @@ export class ReviewService {
 
     return { canReview: true }
   }
+
+  // Respond to review (organizer or customer)
+  static async respondToReview(
+    reviewId: number,
+    userId: number,
+    response: string
+  ) {
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: { event: true },
+    })
+
+    if (!review) {
+      throw new Error('Review not found')
+    }
+
+    // Allow both organizer and customers to respond
+    // Store the response (this will overwrite any existing response)
+    const updated = await prisma.review.update({
+      where: { id: reviewId },
+      data: {
+        response,
+        respondedAt: new Date(),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profilePicture: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            organizerId: true,
+          },
+        },
+      },
+    })
+
+    return updated
+  }
+
+  // Get reviews for organizer's events
+  static async getOrganizerReviews(organizerId: number) {
+    const events = await prisma.event.findMany({
+      where: { organizerId },
+      select: { id: true },
+    })
+
+    const eventIds = events.map(e => e.id)
+
+    const reviews = await prisma.review.findMany({
+      where: { eventId: { in: eventIds } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profilePicture: true,
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return reviews
+  }
+
+  // Get event reviews by slug
+  static async getEventReviewsBySlug(slug: string) {
+    const event = await prisma.event.findUnique({
+      where: { slug },
+      select: { 
+        id: true, 
+        title: true, 
+        organizerId: true,
+      },
+    })
+
+    if (!event) {
+      throw new Error('Event not found')
+    }
+
+    // Get organizer info
+    const organizer = await prisma.user.findUnique({
+      where: { id: event.organizerId },
+      select: {
+        firstName: true,
+        lastName: true,
+      },
+    })
+
+    const reviews = await prisma.review.findMany({
+      where: { eventId: event.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profilePicture: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Add event data to each review
+    const reviewsWithEvent = reviews.map(review => ({
+      ...review,
+      event: {
+        id: event.id,
+        organizerId: event.organizerId,
+      },
+    }))
+
+    return {
+      reviews: reviewsWithEvent,
+      eventTitle: event.title,
+      event: {
+        id: event.id,
+        organizerId: event.organizerId,
+        organizerFirstName: organizer?.firstName,
+        organizerLastName: organizer?.lastName,
+      },
+    }
+  }
 }

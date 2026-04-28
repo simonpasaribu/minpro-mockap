@@ -1,0 +1,76 @@
+{
+  "name": "Event Management API - Local Environment",
+  "values": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "default",
+      "enabled": true,
+      "description": "Backend API base URL"
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "type": "secret",
+      "enabled": true,
+      "description": "JWT token from login - auto-set by test script"
+    },
+    {
+      "key": "RESET_TOKEN",
+      "value": "",
+      "type": "secret",
+      "enabled": true,
+      "description": "Reset token from forgot-password - auto-set by test script"
+    },
+    {
+      "key": "event_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true,
+      "description": "Event ID for transaction body (numeric)"
+    },
+    {
+      "key": "event_slug",
+      "value": "tech-conference-2024",
+      "type": "default",
+      "enabled": true,
+      "description": "Event slug for URL (e.g., tech-conference-2024)"
+    },
+    {
+      "key": "transaction_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true,
+      "description": "Transaction ID for testing"
+    },
+    {
+      "key": "organizer_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true,
+      "description": "Organizer ID for internal use"
+    },
+    {
+      "key": "organizer_username",
+      "value": "organizer",
+      "type": "default",
+      "enabled": true,
+      "description": "Organizer username for public profile URL"
+    },
+    {
+      "key": "review_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true,
+      "description": "Review ID for testing"
+    },
+    {
+      "key": "voucher_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true,
+      "description": "Voucher ID for testing"
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

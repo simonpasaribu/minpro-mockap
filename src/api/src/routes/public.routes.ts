@@ -10,11 +10,17 @@ const router = Router()
 // GET /api/events - Browse all published events with filters
 router.get('/events', PublicController.getPublishedEvents)
 
-// GET /api/events/:id - Get single event details (public)
-router.get('/events/:id', PublicController.getEventDetails)
+// GET /api/events/stats - Get public platform statistics
+router.get('/events/stats', PublicController.getPublicStats)
 
-// GET /api/organizers/:id - Get public organizer profile with reviews
-router.get('/organizers/:id', PublicController.getOrganizerProfile)
+// GET /api/events/popular - Get popular events
+router.get('/events/popular', PublicController.getPopularEvents)
+
+// GET /api/events/:slug - Get single event details by slug (public)
+router.get('/events/:slug', PublicController.getEventDetails)
+
+// GET /api/organizers/:username - Get public organizer profile with reviews by username
+router.get('/organizers/:username', PublicController.getOrganizerProfile)
 
 // GET /api/categories - Get all event categories
 router.get('/categories', PublicController.getCategories)

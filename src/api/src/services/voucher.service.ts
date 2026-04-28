@@ -4,7 +4,7 @@ export class VoucherService {
   // Create voucher for an event (Organizer only)
   static async createVoucher(
     organizerId: number,
-    eventId: number,
+    slug: string,
     voucherData: {
       code: string
       discount: number
@@ -14,7 +14,7 @@ export class VoucherService {
   ) {
     // Check if event exists and belongs to organizer
     const event = await prisma.event.findUnique({
-      where: { id: eventId },
+      where: { slug },
     })
 
     if (!event) {
@@ -28,7 +28,7 @@ export class VoucherService {
     // Check if voucher code already exists for this event
     const existingVoucher = await prisma.eventVoucher.findFirst({
       where: {
-        eventId,
+        eventId: event.id,
         code: voucherData.code,
       },
     })
@@ -50,7 +50,7 @@ export class VoucherService {
     // Create voucher
     const voucher = await prisma.eventVoucher.create({
       data: {
-        eventId,
+        eventId: event.id,
         code: voucherData.code.toUpperCase(),
         discount: voucherData.discount,
         quota: voucherData.quota,
@@ -63,10 +63,10 @@ export class VoucherService {
   }
 
   // Get vouchers for an event (Organizer only)
-  static async getEventVouchers(organizerId: number, eventId: number) {
+  static async getEventVouchers(organizerId: number, slug: string) {
     // Check if event exists and belongs to organizer
     const event = await prisma.event.findUnique({
-      where: { id: eventId },
+      where: { slug },
     })
 
     if (!event) {
@@ -78,7 +78,7 @@ export class VoucherService {
     }
 
     const vouchers = await prisma.eventVoucher.findMany({
-      where: { eventId },
+      where: { eventId: event.id },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -88,12 +88,12 @@ export class VoucherService {
   // Delete voucher (Organizer only)
   static async deleteVoucher(
     organizerId: number,
-    eventId: number,
+    slug: string,
     voucherId: number
   ) {
     // Check if event exists and belongs to organizer
     const event = await prisma.event.findUnique({
-      where: { id: eventId },
+      where: { slug },
     })
 
     if (!event) {
@@ -108,7 +108,7 @@ export class VoucherService {
     const voucher = await prisma.eventVoucher.findFirst({
       where: {
         id: voucherId,
-        eventId,
+        eventId: event.id,
       },
     })
 
