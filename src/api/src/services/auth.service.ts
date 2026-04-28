@@ -279,7 +279,17 @@ export class AuthService {
       },
     })
 
-    return updatedUser
+    // Generate new token with updated role
+    const newToken = generateToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+    })
+
+    return {
+      user: updatedUser,
+      token: newToken,
+    }
   }
 
   // Get user role info
