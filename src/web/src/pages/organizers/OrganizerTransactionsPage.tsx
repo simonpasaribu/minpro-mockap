@@ -12,7 +12,17 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ArrowUpDown,
 } from 'lucide-react'
+
+type SortOption = 'newest' | 'oldest' | 'priceHigh' | 'priceLow'
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: 'newest', label: 'Terbaru' },
+  { value: 'oldest', label: 'Terlama' },
+  { value: 'priceHigh', label: 'Harga Tinggi → Rendah' },
+  { value: 'priceLow', label: 'Harga Rendah → Tinggi' },
+]
 
 export default function OrganizerTransactionsPage() {
   const navigate = useNavigate()
@@ -20,6 +30,16 @@ export default function OrganizerTransactionsPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false)
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
+
+  const filterOptions = [
+    { value: '', label: 'Semua' },
+    { value: 'WAITING', label: 'Menunggu' },
+    { value: 'DONE', label: 'Berhasil' },
+    { value: 'FAILED', label: 'Gagal' },
+  ]
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -87,20 +107,42 @@ export default function OrganizerTransactionsPage() {
     })
   }
 
-  const filteredTransactions = transactions.filter((t) => {
-    const searchLower = searchQuery.toLowerCase()
-    return (
-      t.user.firstName.toLowerCase().includes(searchLower) ||
-      t.user.lastName.toLowerCase().includes(searchLower) ||
-      t.user.email.toLowerCase().includes(searchLower) ||
-      t.event.title.toLowerCase().includes(searchLower) ||
-      t.status.toLowerCase().includes(searchLower)
-    )
-  })
+  // Filter and sort transactions
+  const filteredAndSortedTransactions = (() => {
+    // First filter
+    let result = transactions.filter((t) => {
+      const searchLower = searchQuery.toLowerCase()
+      return (
+        t.user.firstName.toLowerCase().includes(searchLower) ||
+        t.user.lastName.toLowerCase().includes(searchLower) ||
+        t.user.email.toLowerCase().includes(searchLower) ||
+        t.event.title.toLowerCase().includes(searchLower) ||
+        t.status.toLowerCase().includes(searchLower)
+      )
+    })
+    
+    // Then sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case 'priceHigh':
+          return b.totalAmount - a.totalAmount
+        case 'priceLow':
+          return a.totalAmount - b.totalAmount
+        default:
+          return 0
+      }
+    })
+    
+    return result
+  })()
 
   // Pagination
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage)
-  const paginatedTransactions = filteredTransactions.slice(
+  const totalPages = Math.ceil(filteredAndSortedTransactions.length / itemsPerPage)
+  const paginatedTransactions = filteredAndSortedTransactions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
@@ -201,7 +243,7 @@ export default function OrganizerTransactionsPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#e2d7ff] mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-3">
             {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#5f557f]" />
@@ -214,19 +256,86 @@ export default function OrganizerTransactionsPage() {
               />
             </div>
 
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-[#5f557f]" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-3 rounded-xl border border-[#e2d7ff] focus:border-[#4a3fe2] focus:ring-2 focus:ring-[#4a3fe2]/20 outline-none bg-white"
+            {/* Status Filter Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                className="flex items-center gap-2 px-4 py-3 bg-white border border-[#e2d7ff] rounded-xl hover:border-[#4a3fe2] hover:bg-[#faf4ff] transition-all text-sm min-w-[140px] justify-between"
               >
-                <option value="">Semua</option>
-                <option value="WAITING">Menunggu</option>
-                <option value="DONE">Berhasil</option>
-                <option value="FAILED">Gagal</option>
-              </select>
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#5f557f]" />
+                  <span className="text-[#32294f]">
+                    {filterOptions.find(o => o.value === statusFilter)?.label}
+                  </span>
+                </div>
+                <ChevronLeft className={`w-4 h-4 text-[#5f557f] transition-transform ${isFilterDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+              </button>
+              
+              {isFilterDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setIsFilterDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-lg border border-[#e2d7ff] z-20 py-1">
+                    {filterOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setStatusFilter(option.value)
+                          setIsFilterDropdownOpen(false)
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#f5eeff] transition-colors ${
+                          statusFilter === option.value ? 'bg-[#f5eeff] text-[#4a3fe2] font-medium' : 'text-[#32294f]'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                className="flex items-center gap-2 px-4 py-3 bg-white border border-[#e2d7ff] rounded-xl hover:border-[#4a3fe2] hover:bg-[#faf4ff] transition-all text-sm min-w-[160px] justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-[#5f557f]" />
+                  <span className="text-[#32294f]">
+                    {sortOptions.find(o => o.value === sortBy)?.label}
+                  </span>
+                </div>
+                <ChevronLeft className={`w-4 h-4 text-[#5f557f] transition-transform ${isSortDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+              </button>
+              
+              {isSortDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setIsSortDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-[#e2d7ff] z-20 py-1">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value)
+                          setIsSortDropdownOpen(false)
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#f5eeff] transition-colors ${
+                          sortBy === option.value ? 'bg-[#f5eeff] text-[#4a3fe2] font-medium' : 'text-[#32294f]'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -237,7 +346,7 @@ export default function OrganizerTransactionsPage() {
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4a3fe2]"></div>
             </div>
-          ) : filteredTransactions.length === 0 ? (
+          ) : filteredAndSortedTransactions.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#faf4ff] flex items-center justify-center">
                 <Calendar className="w-8 h-8 text-[#4a3fe2]" />
@@ -403,7 +512,7 @@ export default function OrganizerTransactionsPage() {
               {/* Pagination */}
               <div className="px-4 sm:px-6 py-6 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#e2d7ff]">
                 <span className="text-xs text-[#5f557f] text-center sm:text-left">
-                  Halaman {currentPage} dari {totalPages} ({filteredTransactions.length} transaksi)
+                  Halaman {currentPage} dari {totalPages} ({filteredAndSortedTransactions.length} transaksi)
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -453,7 +562,7 @@ export default function OrganizerTransactionsPage() {
 
         {/* Footer Info */}
         <div className="mt-6 flex items-center justify-between text-sm text-[#5f557f]">
-          <p>Menampilkan {filteredTransactions.length} transaksi</p>
+          <p>Menampilkan {filteredAndSortedTransactions.length} transaksi</p>
           <p>Terakhir diperbarui: {new Date().toLocaleString('id-ID')}</p>
         </div>
       </div>

@@ -26,6 +26,16 @@ export default function TransactionDetailPage() {
   const [processingAction, setProcessingAction] = useState<'accept' | 'reject' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  // Optimization refs
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isPollingPausedRef = useRef(false)
+  const transactionRef = useRef<Transaction | null>(null)
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    transactionRef.current = transaction
+  }, [transaction])
+  
   // Image modal state
   const [showImageModal, setShowImageModal] = useState(false)
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -78,13 +88,29 @@ export default function TransactionDetailPage() {
     return () => clearInterval(interval)
   }, [transaction])
 
-  // Handle browser back button
+  // Handle browser back button - only show modal for specific roles and statuses
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault()
-      setShowBackModal(true)
-      // Push state to prevent actual navigation
-      window.history.pushState(null, '', window.location.href)
+      
+      const currentTx = transactionRef.current
+      // Only show modal for:
+      // - CUSTOMER with WAITING_PAYMENT status
+      // - ORGANIZER with WAITING_CONFIRMATION status
+      const shouldShowModal = 
+        (user?.role === 'CUSTOMER' && currentTx?.status === 'WAITING_PAYMENT') ||
+        (user?.role === 'ORGANIZER' && currentTx?.status === 'WAITING_CONFIRMATION')
+      
+      if (shouldShowModal) {
+        setShowBackModal(true)
+        window.history.pushState(null, '', window.location.href)
+      } else {
+        if (user?.role === 'ORGANIZER') {
+          navigate('/organizer/transactions')
+        } else {
+          navigate('/my-transactions')
+        }
+      }
     }
 
     window.history.pushState(null, '', window.location.href)
@@ -93,7 +119,7 @@ export default function TransactionDetailPage() {
     return () => {
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [])
+  }, [user, navigate])
 
   const paymentMethods = {
     BCA: { bank: 'BCA (Bank Central Asia)', account: '1234567890', name: 'PT Belajar Indonesia' },
@@ -104,6 +130,39 @@ export default function TransactionDetailPage() {
     QRIS: { bank: 'QRIS', account: 'Scan QR Code', name: 'PT Belajar Indonesia' }
   }
 
+  // Deep comparison helper to check if transaction data actually changed
+  const hasTransactionChanged = (newTx: Transaction, oldTx: Transaction | null): boolean => {
+    if (!oldTx) return true
+    
+    // Compare only fields that affect UI
+    return (
+      newTx.status !== oldTx.status ||
+      newTx.paymentProofUrl !== oldTx.paymentProofUrl ||
+      newTx.updatedAt !== oldTx.updatedAt ||
+      newTx.totalAmount !== oldTx.totalAmount
+    )
+  }
+
+  // Silent fetch for polling - doesn't trigger loading state, only updates if changed
+  const silentFetchTransaction = async () => {
+    if (!id) return
+    try {
+      const response = await transactionApi.getTransactionById(parseInt(id))
+      const newData = response.data
+      
+      // Only update state if data actually changed
+      if (hasTransactionChanged(newData, transactionRef.current)) {
+        console.log('Polling: Transaction data changed, updating state')
+        setTransaction(newData)
+      } else {
+        console.log('Polling: No changes detected')
+      }
+    } catch (err: any) {
+      // Silent fail on polling - don't show error UI
+      console.log('Polling error (silent):', err.message)
+    }
+  }
+
   const fetchTransaction = async () => {
     if (!id) return
     try {
@@ -112,10 +171,9 @@ export default function TransactionDetailPage() {
       setErrorType(null)
       console.log('Fetching transaction with ID:', id, 'User role:', user?.role)
       
-      // Use the same API for both organizers and customers
-      // Backend now allows organizers to view transactions for their events
       const response = await transactionApi.getTransactionById(parseInt(id))
-      console.log('Transaction fetched:', response.data)
+      console.log('Transaction data received:', response.data)
+      
       setTransaction(response.data)
     } catch (err: any) {
       console.error('Error fetching transaction:', err)
@@ -152,20 +210,39 @@ export default function TransactionDetailPage() {
   }, [id])
 
   // Polling: Auto-refresh transaction status every 5 seconds for real-time updates
+  // OPTIMIZED: Uses single interval with ref, doesn't restart on status change
   useEffect(() => {
+    // Cleanup previous interval
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+
     if (!transaction) return
 
-    // Only poll for statuses that can change (WAITING_PAYMENT, WAITING_CONFIRMATION)
+    // Only poll for statuses that can change
     const shouldPoll = ['WAITING_PAYMENT', 'WAITING_CONFIRMATION'].includes(transaction.status)
     if (!shouldPoll) return
 
-    const pollInterval = setInterval(() => {
-      console.log('Polling transaction status...')
-      fetchTransaction()
-    }, 5000) // 5 seconds
+    // Start polling
+    pollIntervalRef.current = setInterval(() => {
+      // Skip if uploading or paused
+      if (isPollingPausedRef.current) {
+        console.log('Polling skipped: upload in progress')
+        return
+      }
+      
+      // Silent poll - only update if data changed
+      silentFetchTransaction()
+    }, 5000)
 
-    return () => clearInterval(pollInterval)
-  }, [transaction?.status, transaction?.id])
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [transaction?.id]) // Only restart if transaction ID changes
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'Gratis'
@@ -224,6 +301,10 @@ export default function TransactionDetailPage() {
 
     setUploading(true)
     setError(null)
+    
+    // Pause polling during upload to prevent conflicts
+    isPollingPausedRef.current = true
+    console.log('Polling paused for upload')
 
     try {
       console.log('Uploading payment proof via backend:', { 
@@ -233,15 +314,23 @@ export default function TransactionDetailPage() {
       })
 
       // Upload via backend API (includes Cloudinary upload + DB update)
-      await cloudinaryApi.uploadPaymentProof(
+      const paymentProofUrl = await cloudinaryApi.uploadPaymentProof(
         selectedFile,
         user.id,
         transaction.id
       )
 
-      // Refresh transaction data
-      await fetchTransaction()
+      // Update local state directly instead of full refresh (smooth transition)
+      setTransaction({
+        ...transaction,
+        status: 'WAITING_CONFIRMATION',
+        paymentProofUrl: paymentProofUrl,
+        updatedAt: new Date().toISOString()
+      })
       setSelectedFile(null)
+      setPreviewUrl('')
+      
+      console.log('Upload completed, state updated smoothly')
     } catch (err: any) {
       console.error('Upload error:', err)
       const errorMessage = err.response?.data?.message || 'Gagal upload bukti pembayaran'
@@ -253,6 +342,9 @@ export default function TransactionDetailPage() {
       }
     } finally {
       setUploading(false)
+      // Resume polling after upload
+      isPollingPausedRef.current = false
+      console.log('Polling resumed')
     }
   }
 
@@ -670,6 +762,7 @@ export default function TransactionDetailPage() {
 
                   {!selectedFile ? (
                     <button
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-blue-500 hover:bg-blue-50 transition-colors flex flex-col items-center gap-2"
                     >
@@ -685,6 +778,7 @@ export default function TransactionDetailPage() {
                         className="w-full h-48 object-cover rounded-xl"
                       />
                       <button
+                        type="button"
                         onClick={handleRemoveFile}
                         className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
                       >
@@ -696,6 +790,7 @@ export default function TransactionDetailPage() {
 
                   {/* Submit Button */}
                   <button
+                    type="button"
                     onClick={handleUploadProof}
                     disabled={!selectedFile || uploading}
                     className="w-full bg-[#4a3fe2] text-white py-3 rounded-xl font-semibold hover:bg-[#3d2fd6] disabled:bg-gray-300 flex items-center justify-center gap-2"
@@ -1128,23 +1223,37 @@ export default function TransactionDetailPage() {
       {showBackModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#32294f]/40 backdrop-blur-md p-4">
           <div className="bg-white max-w-sm w-full rounded-2xl p-6 text-center shadow-2xl border border-[#b2a6d5]/20">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ArrowLeft className="w-8 h-8 text-blue-600" />
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+              user?.role === 'ORGANIZER' ? 'bg-yellow-100' : 'bg-blue-100'
+            }`}>
+              <ArrowLeft className={`w-8 h-8 ${
+                user?.role === 'ORGANIZER' ? 'text-yellow-600' : 'text-blue-600'
+              }`} />
             </div>
-            <h3 className="text-xl font-extrabold text-[#32294f] mb-3">Keluar dari Halaman Ini?</h3>
+            <h3 className="text-xl font-extrabold text-[#32294f] mb-3">
+              {user?.role === 'ORGANIZER' 
+                ? 'Tinggalkan Halaman Konfirmasi?' 
+                : 'Tinggalkan Halaman Pembayaran?'}
+            </h3>
             <p className="text-[#5f557f] mb-6">
-              Anda akan keluar dari halaman detail transaksi.
+              {user?.role === 'ORGANIZER' 
+                ? 'Anda masih perlu mengkonfirmasi pembayaran ini. Jika Anda keluar, transaksi akan tetap menunggu konfirmasi Anda.' 
+                : 'Anda masih dalam proses pembayaran. Jika Anda keluar, transaksi akan tetap menunggu pembayaran Anda.'}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBackModal(false)}
                 className="flex-1 py-3 rounded-xl text-[#6249b2] font-bold hover:bg-[#d8caff] transition-colors"
               >
-                Batal
+                Tetap Disini
               </button>
               <button
                 onClick={handleBackConfirm}
-                className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+                className={`flex-1 py-3 rounded-xl text-white font-bold transition-all shadow-lg ${
+                  user?.role === 'ORGANIZER' 
+                    ? 'bg-yellow-500 hover:bg-yellow-600 shadow-yellow-500/20' 
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
+                }`}
               >
                 Ya, Keluar
               </button>

@@ -253,19 +253,41 @@ export class OrganizerDashboardService {
         })
       }
 
-      // Rollback: Restore voucher if used
+      // Rollback: Restore voucher/coupon if used
       if (transaction.voucherCode) {
-        await tx.eventVoucher.updateMany({
+        // Check if it's an event voucher or personal coupon
+        const voucher = await tx.eventVoucher.findFirst({
           where: {
             eventId: transaction.eventId,
             code: transaction.voucherCode,
           },
-          data: {
-            usedCount: {
-              decrement: 1,
-            },
-          },
         })
+
+        if (voucher) {
+          // It's an event voucher - decrement usedCount
+          await tx.eventVoucher.updateMany({
+            where: {
+              eventId: transaction.eventId,
+              code: transaction.voucherCode,
+            },
+            data: {
+              usedCount: {
+                decrement: 1,
+              },
+            },
+          })
+        } else {
+          // It's a personal coupon - restore by setting isUsed back to false
+          await tx.coupon.updateMany({
+            where: {
+              userId: transaction.userId,
+              code: transaction.voucherCode,
+            },
+            data: {
+              isUsed: false,
+            },
+          })
+        }
       }
 
       // Update transaction status
@@ -433,6 +455,7 @@ export class OrganizerDashboardService {
         label: periodLabel,
         revenue,
         attendees,
+        transactionCount: periodTransactions.length,
       })
     }
 
@@ -460,11 +483,26 @@ export class OrganizerDashboardService {
     // Calculate summary metrics
     const totalRevenue = chartDataWithChange.reduce((sum, d) => sum + d.revenue, 0)
     const totalAttendees = chartDataWithChange.reduce((sum, d) => sum + d.attendees, 0)
+    const totalTransactions = chartDataWithChange.reduce((sum, d) => sum + d.transactionCount, 0)
     const avgRevenue = totalRevenue / 7
     const avgAttendees = totalAttendees / 7
+    const avgOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0
 
-    // Find best period
+    // Calculate previous period totals for comparison
+    const prevTotalRevenue = chartDataWithChange.reduce((sum, d) => sum + d.prevRevenue, 0)
+    const prevTotalAttendees = chartDataWithChange.reduce((sum, d) => sum + d.prevAttendees, 0)
+    
+    // Calculate growth percentages
+    const revenueGrowth = prevTotalRevenue > 0 
+      ? ((totalRevenue - prevTotalRevenue) / prevTotalRevenue * 100)
+      : (totalRevenue > 0 ? 100 : 0)
+    const attendeesGrowth = prevTotalAttendees > 0
+      ? ((totalAttendees - prevTotalAttendees) / prevTotalAttendees * 100)
+      : (totalAttendees > 0 ? 100 : 0)
+
+    // Find best and worst periods
     const bestRevenue = chartDataWithChange.reduce((max, d) => d.revenue > max.revenue ? d : max, chartDataWithChange[0])
+    const worstRevenue = chartDataWithChange.reduce((min, d) => d.revenue < min.revenue ? d : min, chartDataWithChange[0])
     const bestAttendees = chartDataWithChange.reduce((max, d) => d.attendees > max.attendees ? d : max, chartDataWithChange[0])
 
     return {
@@ -472,14 +510,77 @@ export class OrganizerDashboardService {
       summary: {
         totalRevenue,
         totalAttendees,
+        totalTransactions,
         avgRevenue,
         avgAttendees,
+        avgOrderValue,
+        revenueGrowth: Math.round(revenueGrowth * 100) / 100,
+        attendeesGrowth: Math.round(attendeesGrowth * 100) / 100,
         bestRevenuePeriod: bestRevenue?.label || null,
         bestRevenueAmount: bestRevenue?.revenue || 0,
+        worstRevenuePeriod: worstRevenue?.label || null,
+        worstRevenueAmount: worstRevenue?.revenue || 0,
         bestAttendeesPeriod: bestAttendees?.label || null,
         bestAttendeesCount: bestAttendees?.attendees || 0,
       }
     }
+  }
+
+  // Get top buyers (frequent buyers)
+  static async getTopBuyers(userId: number) {
+    const events = await prisma.event.findMany({
+      where: { organizerId: userId },
+      select: { id: true },
+    })
+
+    const eventIds = events.map(e => e.id)
+
+    // Get transactions grouped by user
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        eventId: { in: eventIds },
+        status: TransactionStatus.DONE,
+      },
+      select: {
+        userId: true,
+        totalAmount: true,
+        ticketCount: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    // Group by user and calculate totals
+    const buyerMap = new Map<number, any>()
+
+    transactions.forEach(t => {
+      const existing = buyerMap.get(t.userId)
+      if (existing) {
+        existing.totalAmount += t.totalAmount
+        existing.totalTickets += t.ticketCount
+        existing.transactionCount += 1
+      } else {
+        buyerMap.set(t.userId, {
+          userId: t.userId,
+          firstName: t.user.firstName,
+          lastName: t.user.lastName,
+          email: t.user.email,
+          totalAmount: t.totalAmount,
+          totalTickets: t.ticketCount,
+          transactionCount: 1,
+        })
+      }
+    })
+
+    // Convert to array and sort by transaction count (most frequent first)
+    const buyers = Array.from(buyerMap.values()).sort((a, b) => b.transactionCount - a.transactionCount)
+
+    return buyers.slice(0, 10) // Return top 10 buyers
   }
 
   // Get daily revenue report
