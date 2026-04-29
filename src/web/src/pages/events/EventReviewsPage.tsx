@@ -136,9 +136,9 @@ export default function EventReviewsPage() {
   // Handle back navigation with state
   const handleBack = () => {
     if (location.state?.from) {
-      navigate(location.state.from)
+      navigate(location.state.from, { state: { activeTab: location.state.activeTab || 'events' } })
     } else {
-      navigate(`/events/${slug}`)
+      navigate('/organizer/dashboard', { state: { activeTab: 'events' } })
     }
   }
 

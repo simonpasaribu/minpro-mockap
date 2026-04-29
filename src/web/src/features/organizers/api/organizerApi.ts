@@ -142,6 +142,7 @@ export interface ChartData {
   label: string
   revenue: number
   attendees: number
+  transactionCount: number
   prevRevenue: number
   prevAttendees: number
   revenueChange: number
@@ -151,10 +152,16 @@ export interface ChartData {
 export interface ChartSummary {
   totalRevenue: number
   totalAttendees: number
+  totalTransactions: number
   avgRevenue: number
   avgAttendees: number
+  avgOrderValue: number
+  revenueGrowth: number
+  attendeesGrowth: number
   bestRevenuePeriod: string | null
   bestRevenueAmount: number
+  worstRevenuePeriod: string | null
+  worstRevenueAmount: number
   bestAttendeesPeriod: string | null
   bestAttendeesCount: number
 }
@@ -162,6 +169,16 @@ export interface ChartSummary {
 export interface ChartResponse {
   chartData: ChartData[]
   summary: ChartSummary
+}
+
+export interface TopBuyer {
+  userId: number
+  firstName: string
+  lastName: string
+  email: string
+  totalAmount: number
+  totalTickets: number
+  transactionCount: number
 }
 
 export const organizerApi = {
@@ -265,11 +282,13 @@ export const organizerApi = {
   // Get chart statistics
   getChartStatistics: async (filter: 'year' | 'month' | 'day' = 'month'): Promise<ChartResponse> => {
     const response = await api.get(`/organizer/statistics-chart?filter=${filter}`)
-    const data = response.data.data || response.data
-    return {
-      chartData: data.chartData || [],
-      summary: data.summary || null
-    }
+    return response.data.data
+  },
+
+  // Get top buyers
+  getTopBuyers: async (): Promise<TopBuyer[]> => {
+    const response = await api.get('/organizer/top-buyers')
+    return response.data.data
   },
 
   // Get daily revenue report

@@ -1,28 +1,519 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { organizerApi, OrganizerEvent, Transaction, ChartData, ChartSummary, Statistics } from '../../features/organizers/api/organizerApi'
-import { Calendar, Users, Clock, ArrowLeft, Edit, Ticket, MapPin, CreditCard, MessageSquare } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { organizerApi, OrganizerEvent, Transaction, ChartData, ChartSummary, Statistics, TopBuyer } from '../../features/organizers/api/organizerApi'
+import { Calendar, Users, Clock, ArrowLeft, Edit, Ticket, MapPin, CreditCard, MessageSquare, Crown } from 'lucide-react'
 
-// Memoized Revenue Analytics Chart Component
-const RevenueAnalyticsChart = ({ 
+// ============== UTILITY FUNCTIONS ==============
+const formatPrice = (price: number) => {
+  if (price === 0) return 'Rp 0'
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(price)
+}
+
+const formatCompactNumber = (num: number) => {
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B'
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+  return num.toString()
+}
+
+// ============== MEMOIZED KPI SECTION ==============
+// Only re-renders when growth data changes
+interface KPIData {
+  totalRevenue: number
+  totalTransactions: number
+  totalAttendees: number
+  avgOrderValue: number
+  revenueGrowth: number
+  attendeesGrowth: number
+}
+
+const KPISection = memo(({ 
+  data
+}: { 
+  data: KPIData
+}) => {
+  const formatGrowth = useCallback((growth: number) => {
+    if (growth === 0) return null
+    const isPositive = growth > 0
+    const color = isPositive ? 'text-green-600' : 'text-red-500'
+    const sign = isPositive ? '+' : ''
+    return (
+      <span className={`text-xs font-medium ${color}`}>
+        {sign}{growth.toFixed(1)}% vs periode sebelumnya
+      </span>
+    )
+  }, [])
+
+  // Static values - never change
+  const staticValues = useMemo(() => ({
+    revenue: formatCompactNumber(data.totalRevenue),
+    transactions: data.totalTransactions.toLocaleString(),
+    attendees: data.totalAttendees.toLocaleString(),
+    avgOrder: formatCompactNumber(data.avgOrderValue)
+  }), [data.totalRevenue, data.totalTransactions, data.totalAttendees, data.avgOrderValue])
+
+  // Growth values - only these update on filter change
+  const growthValues = useMemo(() => ({
+    revenueGrowth: data.revenueGrowth,
+    attendeesGrowth: data.attendeesGrowth
+  }), [data.revenueGrowth, data.attendeesGrowth])
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="bg-gradient-to-br from-[#f5eeff] to-white p-4 sm:p-5 rounded-xl border border-[#e2d7ff]/30 hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <CreditCard className="w-4 h-4 text-[#4a3fe2]" />
+          <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold">Total Pendapatan</p>
+        </div>
+        <p className="text-xl sm:text-2xl font-black text-[#32294f] mb-1">
+          {staticValues.revenue}
+        </p>
+        {formatGrowth(growthValues.revenueGrowth)}
+      </div>
+
+      <div className="bg-gradient-to-br from-[#f5eeff] to-white p-4 sm:p-5 rounded-xl border border-[#e2d7ff]/30 hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <Ticket className="w-4 h-4 text-[#4a3fe2]" />
+          <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold">Total Transaksi</p>
+        </div>
+        <p className="text-xl sm:text-2xl font-black text-[#32294f] mb-1">
+          {staticValues.transactions}
+        </p>
+        {formatGrowth(growthValues.revenueGrowth)}
+      </div>
+
+      <div className="bg-gradient-to-br from-[#f5eeff] to-white p-4 sm:p-5 rounded-xl border border-[#e2d7ff]/30 hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-4 h-4 text-[#4a3fe2]" />
+          <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold">Total Peserta</p>
+        </div>
+        <p className="text-xl sm:text-2xl font-black text-[#32294f] mb-1">
+          {staticValues.attendees}
+        </p>
+        {formatGrowth(growthValues.attendeesGrowth)}
+      </div>
+
+      <div className="bg-gradient-to-br from-[#f5eeff] to-white p-4 sm:p-5 rounded-xl border border-[#e2d7ff]/30 hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <Clock className="w-4 h-4 text-[#4a3fe2]" />
+          <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold">Rata-rata Order</p>
+        </div>
+        <p className="text-xl sm:text-2xl font-black text-[#32294f] mb-1">
+          {staticValues.avgOrder}
+        </p>
+        {formatGrowth(growthValues.revenueGrowth)}
+      </div>
+    </div>
+  )
+})
+
+KPISection.displayName = 'KPISection'
+
+// ============== MEMOIZED INSIGHT SECTION ==============
+// Only re-renders when best/worst period data changes
+interface InsightData {
+  bestPeriod: string | null
+  bestAmount: number
+  worstPeriod: string | null
+  worstAmount: number
+  activeEvents: number
+}
+
+const InsightSection = memo(({ data }: { data: InsightData }) => {
+  return (
+    <div className="space-y-4">
+      <div className="bg-gradient-to-br from-[#faf4ff] to-white p-4 rounded-xl border border-[#e2d7ff]/30">
+        <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-2">Terbaik</p>
+        <p className="text-sm font-bold text-[#4a3fe2] mb-1">
+          {data.bestPeriod || '-'}
+        </p>
+        <p className="text-xs text-[#5f557f]">
+          {formatPrice(data.bestAmount)}
+        </p>
+      </div>
+
+      <div className="bg-gradient-to-br from-[#faf4ff] to-white p-4 rounded-xl border border-[#e2d7ff]/30">
+        <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-2">Terendah</p>
+        <p className="text-sm font-bold text-[#ef4444] mb-1">
+          {data.worstPeriod || '-'}
+        </p>
+        <p className="text-xs text-[#5f557f]">
+          {formatPrice(data.worstAmount)}
+        </p>
+      </div>
+
+      <div className="bg-gradient-to-br from-[#faf4ff] to-white p-4 rounded-xl border border-[#e2d7ff]/30">
+        <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-2">Event Aktif</p>
+        <p className="text-sm font-bold text-[#32294f] mb-1">
+          {data.activeEvents} event
+        </p>
+      </div>
+    </div>
+  )
+})
+
+InsightSection.displayName = 'InsightSection'
+
+// ============== MEMOIZED CHART COMPONENT ==============
+// Only re-renders when chartData changes
+const ChartComponent = memo(({ 
+  chartData 
+}: { 
+  chartData: ChartData[] 
+}) => {
+  const peakRevenue = useMemo(() => 
+    chartData.length > 0 
+      ? chartData.reduce((max, item) => item.revenue > max.revenue ? item : max)
+      : null,
+    [chartData]
+  )
+
+  return (
+    <div className="h-full min-h-[280px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData} margin={{ top: 10, right: 5, left: window.innerWidth < 640 ? 30 : 45, bottom: 5 }}>
+          <defs>
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#4a3fe2" />
+              <stop offset="100%" stopColor="#6249b2" />
+            </linearGradient>
+            <linearGradient id="peakGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22c55e" />
+              <stop offset="100%" stopColor="#16a34a" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2d7ff" vertical={false} />
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: window.innerWidth < 640 ? 8 : 9, fill: '#5f557f' }}
+            axisLine={{ stroke: '#e2d7ff' }}
+            tickLine={false}
+            angle={-30}
+            textAnchor="end"
+            height={window.innerWidth < 640 ? 35 : 45}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            tick={{ fontSize: window.innerWidth < 640 ? 9 : 10, fill: '#5f557f' }}
+            axisLine={{ stroke: '#e2d7ff' }}
+            tickLine={false}
+            tickFormatter={(value) => formatCompactNumber(value)}
+            width={window.innerWidth < 640 ? 30 : 40}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'rgba(250, 244, 255, 0.95)',
+              border: '1px solid #e2d7ff',
+              borderRadius: '12px',
+              fontSize: window.innerWidth < 640 ? '10px' : '11px',
+              backdropFilter: 'blur(8px)'
+            }}
+            formatter={(value: any, name: any) => {
+              if (name === 'revenue') {
+                return [formatPrice(Number(value) || 0), 'Pendapatan']
+              }
+              return value
+            }}
+            labelFormatter={(label) => (
+              <div className="font-bold text-[#32294f] mb-1">{label}</div>
+            )}
+          />
+          <Bar 
+            dataKey="revenue" 
+            fill="url(#barGradient)" 
+            radius={[6, 6, 0, 0]}
+            maxBarSize={60}
+          >
+            {chartData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={peakRevenue && entry.date === peakRevenue.date ? 'url(#peakGradient)' : 'url(#barGradient)'}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+})
+
+ChartComponent.displayName = 'ChartComponent'
+
+// Performance Section Component - Independent from chart filter
+const PerformanceSection = memo(({ 
+  events, 
+  transactions 
+}: { 
+  events: OrganizerEvent[]
+  transactions: Transaction[]
+}) => {
+  const [topBuyers, setTopBuyers] = useState<TopBuyer[]>([])
+  const [buyersLoading, setBuyersLoading] = useState(false)
+  const [activePerformanceTab, setActivePerformanceTab] = useState<'event' | 'buyer'>('event')
+
+  const formatPrice = (price: number) => {
+    if (price === 0) return 'Rp 0'
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(price)
+  }
+
+  const fetchTopBuyers = useCallback(async () => {
+    try {
+      setBuyersLoading(true)
+      const buyers = await organizerApi.getTopBuyers()
+      setTopBuyers(buyers || [])
+    } catch (error) {
+      console.error('Failed to fetch top buyers:', error)
+    } finally {
+      setBuyersLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchTopBuyers()
+  }, [fetchTopBuyers])
+
+  // Calculate NET REVENUE by event using useMemo
+  // Net revenue = sum of transaction.totalAmount for DONE transactions per event
+  const revenueByEvent = useMemo(() => {
+    return transactions
+      .filter(t => t.status === 'DONE')
+      .reduce((acc, t) => {
+        acc[t.eventId] = (acc[t.eventId] || 0) + t.totalAmount
+        return acc
+      }, {} as Record<number, number>)
+  }, [transactions])
+
+  // Get net revenue for an event
+  const getNetRevenue = useCallback((eventId: number) => {
+    return revenueByEvent[eventId] || 0
+  }, [revenueByEvent])
+
+  // Sort events by net revenue (highest first)
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => {
+      const revenueA = getNetRevenue(a.id)
+      const revenueB = getNetRevenue(b.id)
+      return revenueB - revenueA
+    })
+  }, [events, getNetRevenue])
+
+  // Check if all events have zero revenue
+  const allEventsZero = useMemo(() => {
+    return sortedEvents.length > 0 && sortedEvents.every(e => getNetRevenue(e.id) === 0)
+  }, [sortedEvents, getNetRevenue])
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-[#32294f]">Performa</h3>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActivePerformanceTab('event')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+              activePerformanceTab === 'event'
+                ? 'bg-[#4a3fe2] text-white shadow-md shadow-[#4a3fe2]/20'
+                : 'bg-[#f5eeff] text-[#5f557f] hover:bg-[#e8deff]'
+            }`}
+          >
+            Event
+          </button>
+          <button
+            onClick={() => setActivePerformanceTab('buyer')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+              activePerformanceTab === 'buyer'
+                ? 'bg-[#4a3fe2] text-white shadow-md shadow-[#4a3fe2]/20'
+                : 'bg-[#f5eeff] text-[#5f557f] hover:bg-[#e8deff]'
+            }`}
+          >
+            Pembeli
+          </button>
+        </div>
+      </div>
+
+      {/* Event Performance Tab */}
+      {activePerformanceTab === 'event' && (
+        <div className="min-h-[300px]">
+          {sortedEvents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-[#5f557f]">
+              <Calendar className="w-12 h-12 mb-3 text-[#e2d7ff]" />
+              <p className="text-sm font-medium">Belum ada event</p>
+              <p className="text-xs text-[#5f557f] mt-1">Buat event pertama Anda untuk melihat performa</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#e2d7ff]/30">
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[40%]">Nama Event</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[20%]">Kapasitas</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[20%]">Tiket Terjual</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[20%]">Pendapatan Bersih</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedEvents.slice(0, 5).map((event, index) => {
+                    const revenue = getNetRevenue(event.id)
+                    const isTopPerformer = index === 0 && !allEventsZero
+                    
+                    return (
+                      <tr 
+                        key={event.id} 
+                        className={`border-b border-[#e2d7ff]/20 hover:bg-[#faf4ff] transition-colors min-h-[60px] ${
+                          isTopPerformer ? 'bg-gradient-to-r from-[#f5eeff]/50 to-transparent' : ''
+                        }`}
+                      >
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-[#32294f]">{event.title}</p>
+                              <p className="text-xs text-[#5f557f]">
+                                {new Date(event.startDate).toLocaleDateString('id-ID', { 
+                                  day: 'numeric', 
+                                  month: 'short', 
+                                  year: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                            {isTopPerformer && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4a3fe2] text-white">
+                                  Event Terbaik
+                                </span>
+                                <span className="text-xs">⭐</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="text-center py-4 px-4 text-sm text-[#5f557f]">
+                          {event.totalSeats}
+                        </td>
+                        <td className="text-center py-4 px-4 text-sm text-[#5f557f]">
+                          {event.soldTickets || 0}
+                        </td>
+                        <td className="text-right py-4 px-4 text-sm font-bold text-[#32294f]">
+                          {formatPrice(revenue)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Buyer Performance Tab */}
+      {activePerformanceTab === 'buyer' && (
+        <div className="min-h-[300px]">
+          {buyersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4a3fe2]"></div>
+            </div>
+          ) : topBuyers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-[#5f557f]">
+              <Users className="w-12 h-12 mb-3 text-[#e2d7ff]" />
+              <p className="text-sm font-medium">Belum ada pembeli</p>
+              <p className="text-xs text-[#5f557f] mt-1">Mulai event untuk melihat pembeli yang sering beli</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#e2d7ff]/30">
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[40%]">Nama Pembeli</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[20%]">Total Tiket</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[20%]">Total Transaksi</th>
+                    <th className="text-center py-4 px-4 text-xs font-bold text-[#5f557f] uppercase tracking-wider w-[20%]">Total Belanja</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topBuyers.slice(0, 5).map((buyer, index) => {
+                    const isTopBuyer = index === 0
+                    
+                    return (
+                      <tr 
+                        key={buyer.userId} 
+                        className={`border-b border-[#e2d7ff]/20 hover:bg-[#faf4ff] transition-colors min-h-[60px] ${
+                          isTopBuyer ? 'bg-gradient-to-r from-[#f5eeff]/50 to-transparent' : ''
+                        }`}
+                      >
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-[#32294f]">
+                                {buyer.firstName} {buyer.lastName}
+                              </p>
+                              <p className="text-xs text-[#5f557f]">{buyer.email}</p>
+                            </div>
+                            {isTopBuyer && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f59e0b] text-white">
+                                  Pembeli Terbaik
+                                </span>
+                                <Crown className="w-4 h-4 text-[#f59e0b]" />
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="text-center py-4 px-4 text-sm text-[#5f557f]">
+                          {buyer.totalTickets}
+                        </td>
+                        <td className="text-center py-4 px-4 text-sm font-bold text-[#32294f]">
+                          {buyer.transactionCount}
+                        </td>
+                        <td className="text-right py-4 px-4 text-sm font-bold text-[#32294f]">
+                          {formatPrice(buyer.totalAmount)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+})
+
+PerformanceSection.displayName = 'PerformanceSection'
+
+// ============== OPTIMIZED CHART SECTION ==============
+// Only re-renders when filter changes - minimal updates to sub-components
+const ChartSection = ({ 
   chartFilter, 
-  onFilterChange 
+  onFilterChange,
+  events,
+  transactions
 }: { 
   chartFilter: 'year' | 'month' | 'day'
   onFilterChange: (filter: 'year' | 'month' | 'day') => void
+  events: OrganizerEvent[]
+  transactions: Transaction[]
 }) => {
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [chartSummary, setChartSummary] = useState<ChartSummary | null>(null)
   const [chartLoading, setChartLoading] = useState(false)
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false)
 
   const fetchChartData = useCallback(async (filter: 'year' | 'month' | 'day') => {
     try {
       setChartLoading(true)
       const response = await organizerApi.getChartStatistics(filter)
-      console.log('Chart data response:', response)
       setChartData(response.chartData || [])
       setChartSummary(response.summary || null)
+      setHasInitiallyLoaded(true)
     } catch (error) {
       console.error('Failed to fetch chart data:', error)
     } finally {
@@ -34,55 +525,77 @@ const RevenueAnalyticsChart = ({
     fetchChartData(chartFilter)
   }, [chartFilter, fetchChartData])
 
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Rp 0'
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
+  // Memoized KPI data - main values stay constant, only growth updates
+  const kpiData = useMemo(() => ({
+    totalRevenue: chartSummary?.totalRevenue || 0,
+    totalTransactions: chartSummary?.totalTransactions || 0,
+    totalAttendees: chartSummary?.totalAttendees || 0,
+    avgOrderValue: chartSummary?.avgOrderValue || 0,
+    revenueGrowth: chartSummary?.revenueGrowth || 0,
+    attendeesGrowth: chartSummary?.attendeesGrowth || 0,
+  }), [
+    chartSummary?.totalRevenue,
+    chartSummary?.totalTransactions,
+    chartSummary?.totalAttendees,
+    chartSummary?.avgOrderValue,
+    chartSummary?.revenueGrowth,
+    chartSummary?.attendeesGrowth,
+  ])
 
-  const formatCompactNumber = (num: number) => {
-    if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B'
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-    return num.toString()
-  }
+  // Memoized insight data - only updates when period data changes
+  const insightData = useMemo(() => ({
+    bestPeriod: chartSummary?.bestRevenuePeriod || null,
+    bestAmount: chartSummary?.bestRevenueAmount || 0,
+    worstPeriod: chartSummary?.worstRevenuePeriod || null,
+    worstAmount: chartSummary?.worstRevenueAmount || 0,
+    activeEvents: events.filter(e => e.isPublished).length,
+  }), [
+    chartSummary?.bestRevenuePeriod,
+    chartSummary?.bestRevenueAmount,
+    chartSummary?.worstRevenuePeriod,
+    chartSummary?.worstRevenueAmount,
+    events,
+  ])
+
+  // Handle filter change with useCallback
+  const handleFilterChange = useCallback((filter: 'year' | 'month' | 'day') => {
+    onFilterChange(filter)
+  }, [onFilterChange])
 
   return (
     <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-[#e2d7ff]/20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-8 bg-[#4a3fe2] rounded-full"></div>
+          <div className="w-2 h-8 bg-gradient-to-b from-[#4a3fe2] to-[#6249b2] rounded-full"></div>
           <h2 className="text-2xl font-bold tracking-tight text-[#32294f]">Analitik Pendapatan</h2>
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => onFilterChange('day')}
+            onClick={() => handleFilterChange('day')}
             className={`w-20 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
               chartFilter === 'day'
-                ? 'bg-[#4a3fe2] text-white shadow-md shadow-[#4a3fe2]/20'
+                ? 'bg-gradient-to-r from-[#4a3fe2] to-[#6249b2] text-white shadow-md shadow-[#4a3fe2]/20'
                 : 'bg-[#f5eeff] text-[#5f557f] hover:bg-[#e8deff]'
             }`}
           >
             Hari
           </button>
           <button
-            onClick={() => onFilterChange('month')}
+            onClick={() => handleFilterChange('month')}
             className={`w-20 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
               chartFilter === 'month'
-                ? 'bg-[#4a3fe2] text-white shadow-md shadow-[#4a3fe2]/20'
+                ? 'bg-gradient-to-r from-[#4a3fe2] to-[#6249b2] text-white shadow-md shadow-[#4a3fe2]/20'
                 : 'bg-[#f5eeff] text-[#5f557f] hover:bg-[#e8deff]'
             }`}
           >
             Bulan
           </button>
           <button
-            onClick={() => onFilterChange('year')}
+            onClick={() => handleFilterChange('year')}
             className={`w-20 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
               chartFilter === 'year'
-                ? 'bg-[#4a3fe2] text-white shadow-md shadow-[#4a3fe2]/20'
+                ? 'bg-gradient-to-r from-[#4a3fe2] to-[#6249b2] text-white shadow-md shadow-[#4a3fe2]/20'
                 : 'bg-[#f5eeff] text-[#5f557f] hover:bg-[#e8deff]'
             }`}
           >
@@ -91,108 +604,47 @@ const RevenueAnalyticsChart = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8">
-        {/* Summary Cards - Stacked on Left */}
-        <div className="space-y-3 sm:space-y-4 lg:space-y-4">
-          <div className="bg-[#f5eeff] p-3 sm:p-4 rounded-lg">
-            <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-1">Total Pendapatan</p>
-            <p className="text-sm font-black text-[#32294f]">
-              {chartLoading ? (
-                <span className="inline-block w-12 h-4 bg-[#4a3fe2]/20 animate-pulse rounded" />
-              ) : (
-                formatCompactNumber(chartSummary?.totalRevenue || 0)
-              )}
-            </p>
-          </div>
-          <div className="bg-[#f5eeff] p-3 sm:p-4 rounded-lg">
-            <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-1">Rata-rata/Hari</p>
-            <p className="text-sm font-black text-[#32294f]">
-              {chartLoading ? (
-                <span className="inline-block w-12 h-4 bg-[#4a3fe2]/20 animate-pulse rounded" />
-              ) : (
-                formatCompactNumber(chartSummary?.avgRevenue || 0)
-              )}
-            </p>
-          </div>
-          <div className="bg-[#f5eeff] p-3 sm:p-4 rounded-lg">
-            <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-1">Total Peserta</p>
-            <p className="text-sm font-black text-[#32294f]">
-              {chartLoading ? (
-                <span className="inline-block w-12 h-4 bg-[#4a3fe2]/20 animate-pulse rounded" />
-              ) : (
-                chartSummary?.totalAttendees?.toLocaleString() || '0'
-              )}
-            </p>
-          </div>
-          <div className="bg-[#f5eeff] p-3 sm:p-4 rounded-lg">
-            <p className="text-[10px] uppercase tracking-widest text-[#5f557f] font-bold mb-1">Periode Terbaik</p>
-            <p className="text-sm font-black text-[#4a3fe2]">
-              {chartLoading ? (
-                <span className="inline-block w-16 h-4 bg-[#4a3fe2]/20 animate-pulse rounded" />
-              ) : (
-                chartSummary?.bestRevenuePeriod || '-'
-              )}
-            </p>
-          </div>
-        </div>
+      {/* KPI Cards - Memoized, only growth text updates */}
+      <KPISection data={kpiData} />
 
-        {/* Chart - Right Side */}
+      {/* Main Chart + Side Insight Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        {/* Side Insight Panel - Memoized */}
+        <InsightSection data={insightData} />
+
+        {/* Main Chart - Memoized */}
         <div className="lg:col-span-3">
-          {chartLoading ? (
-            <div className="flex items-center justify-center h-full min-h-[200px] sm:min-h-[280px]">
+          {chartLoading && !hasInitiallyLoaded ? (
+            <div className="flex items-center justify-center h-full min-h-[280px]">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4a3fe2]"></div>
             </div>
           ) : chartData.length === 0 ? (
-            <div className="flex items-center justify-center h-full min-h-[200px] sm:min-h-[280px] text-[#5f557f]">
-              <p className="text-sm sm:text-base">Belum ada data transaksi untuk ditampilkan</p>
+            <div className="flex flex-col items-center justify-center h-full min-h-[280px] text-[#5f557f]">
+              <Clock className="w-12 h-12 mb-3 text-[#e2d7ff]" />
+              <p className="text-sm sm:text-base font-medium">Belum ada data transaksi</p>
+              <p className="text-xs text-[#5f557f] mt-1">Mulai event untuk melihat analitik</p>
             </div>
           ) : (
-            <div className="h-full min-h-[200px] sm:min-h-[280px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 5, left: window.innerWidth < 640 ? 30 : 45, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2d7ff" vertical={false} />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: window.innerWidth < 640 ? 8 : 9, fill: '#5f557f' }}
-                    axisLine={{ stroke: '#e2d7ff' }}
-                    tickLine={false}
-                    angle={-30}
-                    textAnchor="end"
-                    height={window.innerWidth < 640 ? 35 : 45}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    tick={{ fontSize: window.innerWidth < 640 ? 9 : 10, fill: '#5f557f' }}
-                    axisLine={{ stroke: '#e2d7ff' }}
-                    tickLine={false}
-                    tickFormatter={(value) => formatCompactNumber(value)}
-                    width={window.innerWidth < 640 ? 30 : 40}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#faf4ff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: window.innerWidth < 640 ? '10px' : '11px'
-                    }}
-                    formatter={(value: any) => formatPrice(Number(value) || 0)}
-                  />
-                  <Bar dataKey="revenue" fill="#4a3fe2" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartComponent chartData={chartData} />
           )}
         </div>
       </div>
+
+      {/* Performance Section - Completely independent, never re-renders on filter change */}
+      <PerformanceSection events={events} transactions={transactions} />
     </div>
   )
 }
 
+ChartSection.displayName = 'ChartSection'
+
+// ============== MAIN ORGANIZER DASHBOARD PAGE ==============
 export default function OrganizerDashboardPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
   const [events, setEvents] = useState<OrganizerEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'revenue'>(location.state?.activeTab || 'overview')
@@ -236,8 +688,11 @@ export default function OrganizerDashboardPage() {
         organizerApi.getEvents()
       ])
       setStatistics(statsData)
-      // Get 5 most recent transactions
-      const sortedTransactions = (allTransactionsData || [])
+      // Store all transactions for net revenue calculation
+      const allTransactionsDataArray = allTransactionsData || []
+      setAllTransactions(allTransactionsDataArray)
+      // Get 5 most recent transactions for display
+      const sortedTransactions = allTransactionsDataArray
         .sort((a: Transaction, b: Transaction) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5)
       setRecentTransactions(sortedTransactions)
@@ -392,9 +847,11 @@ export default function OrganizerDashboardPage() {
 
             {/* Analytics Section */}
             <div className="mb-12">
-              <RevenueAnalyticsChart 
+              <ChartSection 
                 chartFilter={chartFilter} 
-                onFilterChange={setChartFilter} 
+                onFilterChange={setChartFilter}
+                events={events}
+                transactions={allTransactions}
               />
             </div>
 
@@ -740,7 +1197,7 @@ export default function OrganizerDashboardPage() {
                               Attendees
                             </button>
                             <button
-                              onClick={() => navigate(`/events/${event.slug}/reviews`, { state: { from: '/organizer/dashboard' } })}
+                              onClick={() => navigate(`/events/${event.slug}/reviews`, { state: { from: '/organizer/dashboard', activeTab: 'events' } })}
                               className="bg-[#e2d7ff] text-[#32294f] px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-[#d8caff] transition-colors"
                             >
                               <MessageSquare className="w-4 h-4" />

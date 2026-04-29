@@ -81,6 +81,7 @@ export class AuthService {
     expiresAtCoupon.setMonth(expiresAtCoupon.getMonth() + COUPON_EXPIRY_MONTHS)
 
     // Poin C: Referral Registration & Generation
+    // Rule 3: Referral can only be used once during registration
     let referredById: number | null = null
 
     if (referralCode) {
@@ -116,7 +117,7 @@ export class AuthService {
         },
       })
 
-      // Poin A: Referral Rewards - New user gets coupon
+      // Rule 1: Every new user gets WELCOME coupon
       await tx.coupon.create({
         data: {
           userId: user.id,
@@ -126,13 +127,25 @@ export class AuthService {
         },
       })
 
-      // Poin A: Referral Rewards - Referrer gets points (global balance)
+      // Rule 2: If registered with referral, user gets additional REFERRAL_BONUS coupon
+      // and referrer gets 10,000 points
       if (referredById) {
+        // Additional REFERRAL_BONUS coupon for new user
+        await tx.coupon.create({
+          data: {
+            userId: user.id,
+            code: `REFERRAL_BONUS${user.id}`,
+            discount: REFERRAL_REWARD_COUPON_DISCOUNT,
+            expiresAt: expiresAtCoupon,
+          },
+        })
+
+        // Referrer gets 10,000 points
         await tx.user.update({
           where: { id: referredById },
           data: {
             pointsBalance: { increment: REFERRAL_REWARD_POINTS },
-            pointsExpiry: expiresAtPoints, // Reset expiry date for ALL points
+            pointsExpiry: expiresAtPoints,
           },
         })
       }

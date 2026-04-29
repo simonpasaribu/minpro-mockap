@@ -84,9 +84,13 @@ export default function EditProfilePage() {
   const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Upload photo first if selected
+    // Upload photo first if selected (file upload)
     if (selectedFile) {
       await uploadPhoto()
+    }
+    // Or update profile picture via URL if URL is provided
+    else if (imageUrl && imageUrl !== user?.profilePicture) {
+      await uploadPhotoUrl()
     }
     
     // Then update profile
@@ -156,6 +160,31 @@ export default function EditProfilePage() {
       setMessage('Foto profil berhasil diperbarui!')
     } catch (err: any) {
       setMessage(err.response?.data?.message || 'Gagal upload foto')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const uploadPhotoUrl = async () => {
+    if (!imageUrl || imageUrl === user?.profilePicture) return
+
+    setUploading(true)
+    setMessage('')
+
+    try {
+      const response = await api.put('/user/profile-picture', { imageUrl })
+
+      // Update user in context
+      if (user && response.data?.data) {
+        setUser({
+          ...user,
+          profilePicture: response.data.data.profilePicture
+        })
+      }
+
+      setMessage('Foto profil berhasil diperbarui!')
+    } catch (err: any) {
+      setMessage(err.response?.data?.message || 'Gagal mengupdate foto dari URL')
     } finally {
       setUploading(false)
     }

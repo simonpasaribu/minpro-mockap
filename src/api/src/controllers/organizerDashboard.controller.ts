@@ -159,6 +159,26 @@ export class OrganizerDashboardController {
     }
   }
 
+  // GET /api/organizer/top-buyers - Get top buyers
+  static async getTopBuyers(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+
+      const buyers = await OrganizerDashboardService.getTopBuyers(userId)
+
+      res.status(200).json({
+        success: true,
+        data: buyers,
+      })
+    } catch (error: any) {
+      console.error('getTopBuyers error:', error)
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get top buyers',
+      })
+    }
+  }
+
   // GET /api/organizer/daily-revenue-report - Get daily revenue report
   static async getDailyRevenueReport(req: Request, res: Response) {
     try {
