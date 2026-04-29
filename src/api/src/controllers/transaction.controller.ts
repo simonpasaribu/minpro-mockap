@@ -56,7 +56,16 @@ export class TransactionController {
   // GET /api/transactions/:id - Get single transaction
   static async getTransactionById(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId
+      const userId = (req as any).user?.userId
+      
+      // 401: Not authenticated
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized. Please login.',
+        })
+      }
+      
       const transactionId = parseInt(req.params.id)
 
       const result = await TransactionService.getTransactionById(
@@ -69,9 +78,28 @@ export class TransactionController {
         data: result,
       })
     } catch (error: any) {
-      res.status(404).json({
+      const message = error.message || 'Transaction not found'
+      
+      // 404: Transaction not found
+      if (message.includes('not found')) {
+        return res.status(404).json({
+          success: false,
+          message: 'Transaction not found',
+        })
+      }
+      
+      // 403: Forbidden (transaction exists but user doesn't have access)
+      if (message.includes('Unauthorized') || message.includes('Forbidden')) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to access this transaction',
+        })
+      }
+      
+      // 400: Other errors
+      res.status(400).json({
         success: false,
-        message: error.message || 'Transaction not found',
+        message: message,
       })
     }
   }

@@ -15,7 +15,6 @@ export default function AuthPage() {
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
-  const [showLoginPassword, setShowLoginPassword] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
   // Register form state
@@ -28,7 +27,6 @@ export default function AuthPage() {
   })
   const [registerError, setRegisterError] = useState('')
   const [registerLoading, setRegisterLoading] = useState(false)
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
@@ -94,7 +92,11 @@ export default function AuthPage() {
 
   const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
-    setHasUnsavedChanges(true)
+    // Check if form has any data
+    const hasData = Object.values({ ...formData, [e.target.name]: e.target.value }).some(
+      (value) => value && value.toString().trim().length > 0
+    )
+    setHasUnsavedChanges(hasData)
   }
 
   const handleTabChange = (tab: 'login' | 'register') => {
@@ -282,33 +284,15 @@ export default function AuthPage() {
                         Lupa?
                       </Link>
                     </div>
-                    <div className="relative">
-                      <input
-                        className="w-full bg-[#f5eeff] border-none rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4a3fe2]/20 focus:bg-white transition-all placeholder:text-[#b2a6d5]"
-                        id="login-password"
-                        placeholder="••••••••"
-                        type={showLoginPassword ? 'text' : 'password'}
-                        value={loginPassword}
-                        onChange={(event) => setLoginPassword(event.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowLoginPassword(!showLoginPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f] hover:text-[#4a3fe2] transition-colors"
-                      >
-                        {showLoginPassword ? (
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
+                    <input
+                      className="w-full bg-[#f5eeff] border-none rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4a3fe2]/20 focus:bg-white transition-all placeholder:text-[#b2a6d5]"
+                      id="login-password"
+                      placeholder="••••••••"
+                      type="password"
+                      value={loginPassword}
+                      onChange={(event) => setLoginPassword(event.target.value)}
+                      required
+                    />
                   </div>
 
                   {loginError && (
@@ -387,34 +371,16 @@ export default function AuthPage() {
                     <label className="block text-sm font-semibold text-[#5f557f]" htmlFor="register-password">
                       Password
                     </label>
-                    <div className="relative">
-                      <input
-                        className="w-full bg-[#f5eeff] border-none rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4a3fe2]/20 focus:bg-white transition-all placeholder:text-[#b2a6d5]"
-                        id="register-password"
-                        name="password"
-                        placeholder="••••••••"
-                        type={showRegisterPassword ? 'text' : 'password'}
-                        value={formData.password}
-                        onChange={handleRegisterChange}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f557f] hover:text-[#4a3fe2] transition-colors"
-                      >
-                        {showRegisterPassword ? (
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
+                    <input
+                      className="w-full bg-[#f5eeff] border-none rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#4a3fe2]/20 focus:bg-white transition-all placeholder:text-[#b2a6d5]"
+                      id="register-password"
+                      name="password"
+                      placeholder="••••••••"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleRegisterChange}
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">

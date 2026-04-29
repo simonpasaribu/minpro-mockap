@@ -4,15 +4,18 @@ import { transactionApi, Transaction, api } from '../../features/transactions/ap
 import { organizerApi } from '../../features/organizers/api/organizerApi'
 import { cloudinaryApi } from '../../features/upload/api/cloudinaryApi'
 import { useAuth } from '../../features/auth/components/AuthContext'
+import AccessDenied from '../../components/shared/AccessDenied'
+import NotFound from '../../components/shared/NotFound'
 import { Calendar, MapPin, Clock, ArrowLeft, CheckCircle, Upload, Loader2, X, FileImage, ZoomIn, ZoomOut } from 'lucide-react'
 
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [transaction, setTransaction] = useState<Transaction | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<number | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -106,6 +109,7 @@ export default function TransactionDetailPage() {
     try {
       setLoading(true)
       setError(null)
+      setErrorType(null)
       console.log('Fetching transaction with ID:', id, 'User role:', user?.role)
       
       // Use the same API for both organizers and customers
@@ -115,7 +119,29 @@ export default function TransactionDetailPage() {
       setTransaction(response.data)
     } catch (err: any) {
       console.error('Error fetching transaction:', err)
-      setError(err.response?.data?.message || err.message || 'Transaksi tidak ditemukan')
+      const status = err.response?.status
+      const message = err.response?.data?.message || err.message
+      
+      // Handle different HTTP status codes
+      switch (status) {
+        case 401:
+          // Unauthorized - token invalid or expired
+          logout()
+          navigate('/login')
+          return
+        case 403:
+          // Forbidden - transaction exists but user doesn't have access
+          setErrorType(403)
+          setError('Anda tidak memiliki akses ke transaksi ini')
+          break
+        case 404:
+          // Not Found - transaction doesn't exist
+          setErrorType(404)
+          setError('Transaksi tidak ditemukan')
+          break
+        default:
+          setError(message || 'Terjadi kesalahan saat mengambil data transaksi')
+      }
     } finally {
       setLoading(false)
     }
@@ -124,6 +150,22 @@ export default function TransactionDetailPage() {
   useEffect(() => {
     fetchTransaction()
   }, [id])
+
+  // Polling: Auto-refresh transaction status every 5 seconds for real-time updates
+  useEffect(() => {
+    if (!transaction) return
+
+    // Only poll for statuses that can change (WAITING_PAYMENT, WAITING_CONFIRMATION)
+    const shouldPoll = ['WAITING_PAYMENT', 'WAITING_CONFIRMATION'].includes(transaction.status)
+    if (!shouldPoll) return
+
+    const pollInterval = setInterval(() => {
+      console.log('Polling transaction status...')
+      fetchTransaction()
+    }, 5000) // 5 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [transaction?.status, transaction?.id])
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'Gratis'
@@ -294,6 +336,34 @@ export default function TransactionDetailPage() {
   }
 
   if (!transaction) {
+    // Show appropriate error component based on error type
+    if (errorType === 403) {
+      return (
+        <div className="min-h-screen bg-gray-50 pt-20">
+          <AccessDenied
+            title="Akses Ditolak"
+            message="Anda tidak memiliki akses ke transaksi ini"
+            backUrl={user?.role === 'ORGANIZER' ? '/organizer/transactions' : '/my-transactions'}
+            backLabel="Kembali ke Riwayat"
+          />
+        </div>
+      )
+    }
+
+    if (errorType === 404) {
+      return (
+        <div className="min-h-screen bg-gray-50 pt-20">
+          <NotFound
+            title="Transaksi Tidak Ditemukan"
+            message="Transaksi tidak ditemukan atau sudah tidak tersedia"
+            backUrl={user?.role === 'ORGANIZER' ? '/organizer/transactions' : '/my-transactions'}
+            backLabel="Kembali ke Riwayat"
+          />
+        </div>
+      )
+    }
+
+    // Generic error or loading state
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

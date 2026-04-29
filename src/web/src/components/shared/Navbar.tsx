@@ -7,7 +7,6 @@ import { useAuth } from '../../features/auth/components/AuthContext'
 export default function Navbar() {
   const { user, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
@@ -36,11 +35,6 @@ export default function Navbar() {
     setShowUnsavedModal(false)
     setPendingNavigation(null)
   }
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    setIsLoggedIn(!!token)
-  }, [location])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -116,7 +110,7 @@ export default function Navbar() {
               </div>
             ))}
 
-            {isLoggedIn ? (
+            {!!user ? (
               <div className="flex items-center gap-3">
                 <div
                   onClick={() => checkUnsavedChanges(() => navigate('/profile'))}
@@ -184,7 +178,7 @@ export default function Navbar() {
                 </div>
               ))}
 
-              {isLoggedIn ? (
+              {!!user ? (
                 <>
                   <div className="flex flex-col gap-3">
                     <div

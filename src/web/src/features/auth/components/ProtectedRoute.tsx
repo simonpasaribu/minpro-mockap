@@ -2,7 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 
 interface ProtectedRouteProps {
-  requiredRole?: 'ORGANIZER' | 'USER'
+  requiredRole?: 'ORGANIZER' | 'CUSTOMER'
 }
 
 export default function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
