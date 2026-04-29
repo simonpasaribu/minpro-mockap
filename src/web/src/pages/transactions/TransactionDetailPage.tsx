@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { transactionApi, Transaction } from '../../features/transactions/api/transactionApi'
+import { transactionApi, Transaction, api } from '../../features/transactions/api/transactionApi'
 import { organizerApi } from '../../features/organizers/api/organizerApi'
 import { cloudinaryApi } from '../../features/upload/api/cloudinaryApi'
 import { useAuth } from '../../features/auth/components/AuthContext'
@@ -442,8 +442,8 @@ export default function TransactionDetailPage() {
               </div>
             )}
 
-            {/* Payment Information - Bank Transfer Details */}
-            {transaction.status === 'WAITING_PAYMENT' && (
+            {/* Payment Information - Bank Transfer Details - Only show if not free */}
+            {transaction.status === 'WAITING_PAYMENT' && transaction.totalAmount > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
                 <h3 className="text-lg font-semibold text-blue-900 mb-4">Informasi Pembayaran</h3>
                 
@@ -515,6 +515,49 @@ export default function TransactionDetailPage() {
                       <li>Tunggu konfirmasi dari organizer (maksimal 3 hari)</li>
                     </ol>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Free Transaction - Auto Confirm */}
+            {transaction.status === 'WAITING_PAYMENT' && transaction.totalAmount === 0 && user?.role !== 'ORGANIZER' && (
+              <div className="bg-green-50 rounded-2xl shadow-sm border border-green-200 p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">Event Gratis!</h3>
+                  <p className="text-green-700 mb-4">
+                    Transaksi ini tidak memerlukan pembayaran. Klik tombol di bawah untuk langsung konfirmasi.
+                  </p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        setLoading(true)
+                        // For free transactions, auto-confirm by updating status directly
+                        await api.put(`/transactions/${transaction.id}/confirm-free`, {})
+                        await fetchTransaction()
+                      } catch (err: any) {
+                        setError(err.response?.data?.message || 'Gagal mengkonfirmasi transaksi')
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                    disabled={loading}
+                    className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 disabled:bg-gray-300 flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Memproses...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Konfirmasi Pesanan
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}

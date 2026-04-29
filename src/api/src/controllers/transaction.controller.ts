@@ -186,4 +186,50 @@ export class TransactionController {
       next(error)
     }
   }
+
+  // PUT /api/transactions/:id/confirm-free - Confirm free transaction (no payment)
+  static async confirmFreeTransaction(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+      const transactionId = parseInt(req.params.id)
+
+      const { prisma } = await import('../utils/prisma')
+
+      // Verify transaction exists, belongs to user, and is free
+      const transaction = await prisma.transaction.findFirst({
+        where: { 
+          id: transactionId, 
+          userId: userId,
+          status: 'WAITING_PAYMENT',
+          totalAmount: 0
+        }
+      })
+
+      if (!transaction) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Transaction not found, not authorized, or not a free transaction' 
+        })
+      }
+
+      // Update transaction to DONE status
+      await prisma.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'DONE',
+          confirmedAt: new Date()
+        }
+      })
+
+      res.status(200).json({
+        success: true,
+        message: 'Free transaction confirmed successfully',
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to confirm free transaction',
+      })
+    }
+  }
 }
