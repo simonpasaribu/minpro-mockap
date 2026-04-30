@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { organizerApi, Attendee, OrganizerEvent } from '../../features/organizers/api/organizerApi'
-import { ArrowLeft, Users, Mail, Phone, Calendar, DollarSign, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Users, Mail, Phone, Calendar, DollarSign, Search, ChevronLeft, ChevronRight, ArrowUpDown, Check } from 'lucide-react'
+
+type SortOption = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc' | 'priceHigh' | 'priceLow'
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: 'newest', label: 'Terbaru' },
+  { value: 'oldest', label: 'Terlama' },
+  { value: 'nameAsc', label: 'Nama A → Z' },
+  { value: 'nameDesc', label: 'Nama Z → A' },
+  { value: 'priceHigh', label: 'Harga Tinggi → Rendah' },
+  { value: 'priceLow', label: 'Harga Rendah → Tinggi' },
+]
 
 export default function AttendeeListPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -11,6 +22,8 @@ export default function AttendeeListPage() {
   const [event, setEvent] = useState<OrganizerEvent | null>(null)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
@@ -24,14 +37,15 @@ export default function AttendeeListPage() {
     }
   }, [slug])
 
-  // Search with debounce
+  // Search and sort with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchQuery.trim() === '') {
-        setFilteredAttendees(attendees)
-      } else {
+      let result = [...attendees]
+      
+      // Apply search filter
+      if (searchQuery.trim() !== '') {
         const query = searchQuery.toLowerCase()
-        const filtered = attendees.filter(attendee =>
+        result = result.filter(attendee =>
           attendee.participant.firstName.toLowerCase().includes(query) ||
           attendee.participant.lastName.toLowerCase().includes(query) ||
           `${attendee.participant.firstName} ${attendee.participant.lastName}`.toLowerCase().includes(query) ||
@@ -41,13 +55,38 @@ export default function AttendeeListPage() {
           attendee.participant.email.toLowerCase().includes(query) ||
           attendee.user.email.toLowerCase().includes(query)
         )
-        setFilteredAttendees(filtered)
       }
-      setCurrentPage(1) // Reset to first page on search
+      
+      // Apply sorting
+      result.sort((a, b) => {
+        switch (sortBy) {
+          case 'newest':
+            return new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
+          case 'oldest':
+            return new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime()
+          case 'nameAsc':
+            const nameA = `${a.participant.firstName} ${a.participant.lastName}`.toLowerCase()
+            const nameB = `${b.participant.firstName} ${b.participant.lastName}`.toLowerCase()
+            return nameA.localeCompare(nameB)
+          case 'nameDesc':
+            const nameC = `${a.participant.firstName} ${a.participant.lastName}`.toLowerCase()
+            const nameD = `${b.participant.firstName} ${b.participant.lastName}`.toLowerCase()
+            return nameD.localeCompare(nameC)
+          case 'priceHigh':
+            return b.totalAmount - a.totalAmount
+          case 'priceLow':
+            return a.totalAmount - b.totalAmount
+          default:
+            return 0
+        }
+      })
+      
+      setFilteredAttendees(result)
+      setCurrentPage(1) // Reset to first page on search/sort
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchQuery, attendees])
+  }, [searchQuery, attendees, sortBy])
 
   // Update filtered attendees when attendees change
   useEffect(() => {
@@ -138,18 +177,68 @@ export default function AttendeeListPage() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
+        {/* Search + Sort Bar */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Cari berdasarkan nama peserta, pembeli, atau email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4a3fe2] focus:border-transparent text-sm sm:text-base"
             />
           </div>
+          
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:border-[#4a3fe2] hover:bg-[#faf4ff] transition-all text-sm sm:text-base min-w-[180px] justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="w-4 h-4 text-[#5f557f]" />
+                <span className="text-gray-700">
+                  {sortOptions.find(o => o.value === sortBy)?.label}
+                </span>
+              </div>
+              <ChevronLeft className={`w-4 h-4 text-gray-400 transition-transform ${isSortDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+            </button>
+            
+            {isSortDropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsSortDropdownOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-[#e2d7ff] z-20 py-1">
+                  {sortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value)
+                        setIsSortDropdownOpen(false)
+                      }}
+                      className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-[#f5eeff] transition-colors ${
+                        sortBy === option.value ? 'bg-[#f5eeff] text-[#4a3fe2]' : 'text-gray-700'
+                      }`}
+                    >
+                      <span>{option.label}</span>
+                      {sortBy === option.value && (
+                        <Check className="w-4 h-4 text-[#4a3fe2]" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        
+        {/* Sort Indicator */}
+        <div className="mb-4 text-sm text-[#5f557f]">
+          Diurutkan: <span className="font-medium text-[#32294f]">{sortOptions.find(o => o.value === sortBy)?.label}</span>
         </div>
 
         {/* Summary Cards */}

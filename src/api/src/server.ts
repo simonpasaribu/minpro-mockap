@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import routes from './routes'
 import { CronScheduler } from './utils/cron'
+import { verifyEmailConfig } from './utils/email'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -40,8 +41,16 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   })
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
+  
+  // Verify email configuration
+  const emailReady = await verifyEmailConfig()
+  if (emailReady) {
+    console.log('✅ Email server is ready to send emails')
+  } else {
+    console.log('⚠️ Email server not configured. Email notifications will be skipped.')
+  }
 })
 
 export default app

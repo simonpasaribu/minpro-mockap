@@ -173,7 +173,9 @@ export class EventController {
       const folderPath = `events/${userId}/${eventId}`
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: folderPath,
-        public_id: `event_${Date.now()}`,
+        public_id: `event_${eventId}_${Date.now()}`,
+        resource_type: 'auto',
+        overwrite: true,
       })
 
       // Delete temp file

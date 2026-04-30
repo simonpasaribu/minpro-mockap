@@ -40,4 +40,7 @@ router.put('/:id/payment-proof', upload.single('paymentProof'), TransactionContr
 // Cancel transaction
 router.put('/:id/cancel', TransactionController.cancelTransaction)
 
+// Confirm free transaction (no payment required)
+router.put('/:id/confirm-free', TransactionController.confirmFreeTransaction)
+
 export default router

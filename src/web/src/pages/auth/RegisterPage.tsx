@@ -30,6 +30,16 @@ export default function RegisterPage() {
       return
     }
 
+    // Validate firstName and lastName (min 2 chars to match backend)
+    if (formData.firstName.length < 2) {
+      setError('Nama depan harus minimal 2 karakter')
+      return
+    }
+    if (formData.lastName.length < 2) {
+      setError('Nama belakang harus minimal 2 karakter')
+      return
+    }
+
     setLoading(true)
 
     try {

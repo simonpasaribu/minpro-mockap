@@ -1,10 +1,10 @@
 // Global flag for unsaved changes - used by Navbar to check before navigation
 export const setUnsavedChangesFlag = (value: boolean) => {
-  localStorage.setItem('hasUnsavedChanges', value.toString())
+  sessionStorage.setItem('hasUnsavedChanges', value.toString())
 }
 
 export const getUnsavedChangesFlag = (): boolean => {
-  return localStorage.getItem('hasUnsavedChanges') === 'true'
+  return sessionStorage.getItem('hasUnsavedChanges') === 'true'
 }
 
 import { createContext, useContext, ReactNode } from 'react'

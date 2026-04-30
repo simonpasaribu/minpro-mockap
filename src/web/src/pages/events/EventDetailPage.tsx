@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { eventApi, Event } from '../../features/events/api/eventApi'
 import { organizerApi, Attendee } from '../../features/organizers/api/organizerApi'
 import { useAuth } from '../../features/auth/components/AuthContext'
-import { Calendar, MapPin, Users, Clock, Star, ArrowLeft } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, Star, ArrowLeft, Copy, Tag } from 'lucide-react'
 
 interface EventDetail extends Event {
   vouchers: {
@@ -351,10 +351,25 @@ export default function EventDetailPage() {
                   <p className="text-xs sm:text-sm font-medium text-green-800 mb-2">
                     Voucher Tersedia
                   </p>
-                  <ul className="space-y-1">
+                  <ul className="space-y-2">
                     {event.vouchers.map((voucher, idx) => (
-                      <li key={idx} className="text-sm text-green-700">
-                        • {voucher.code}: {voucher.discount}% OFF
+                      <li key={idx} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-green-100">
+                        <div className="flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-700">{voucher.code}</span>
+                          <span className="text-xs font-bold text-green-600">{voucher.discount}% OFF</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(voucher.code).then(() => {
+                              alert('Voucher berhasil disalin!')
+                            })
+                          }}
+                          className="p-1.5 bg-green-100 rounded-md text-green-700 hover:bg-green-200 transition-colors"
+                          title="Salin kode voucher"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
                       </li>
                     ))}
                   </ul>

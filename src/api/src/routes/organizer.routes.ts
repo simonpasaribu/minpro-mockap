@@ -80,6 +80,9 @@ router.get('/events/:slug/attendees', isOrganizer, OrganizerDashboardController.
 // Get statistics chart data (Organizer only)
 router.get('/statistics-chart', isOrganizer, OrganizerDashboardController.getStatisticsChart)
 
+// Get top buyers (Organizer only)
+router.get('/top-buyers', isOrganizer, OrganizerDashboardController.getTopBuyers)
+
 // Get daily revenue report (Organizer only)
 router.get('/daily-revenue-report', isOrganizer, OrganizerDashboardController.getDailyRevenueReport)
 

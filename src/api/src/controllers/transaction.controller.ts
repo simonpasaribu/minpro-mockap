@@ -56,7 +56,16 @@ export class TransactionController {
   // GET /api/transactions/:id - Get single transaction
   static async getTransactionById(req: Request, res: Response) {
     try {
-      const userId = (req as any).user.userId
+      const userId = (req as any).user?.userId
+      
+      // 401: Not authenticated
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized. Please login.',
+        })
+      }
+      
       const transactionId = parseInt(req.params.id)
 
       const result = await TransactionService.getTransactionById(
@@ -69,9 +78,28 @@ export class TransactionController {
         data: result,
       })
     } catch (error: any) {
-      res.status(404).json({
+      const message = error.message || 'Transaction not found'
+      
+      // 404: Transaction not found
+      if (message.includes('not found')) {
+        return res.status(404).json({
+          success: false,
+          message: 'Transaction not found',
+        })
+      }
+      
+      // 403: Forbidden (transaction exists but user doesn't have access)
+      if (message.includes('Unauthorized') || message.includes('Forbidden')) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to access this transaction',
+        })
+      }
+      
+      // 400: Other errors
+      res.status(400).json({
         success: false,
-        message: error.message || 'Transaction not found',
+        message: message,
       })
     }
   }
@@ -154,6 +182,8 @@ export class TransactionController {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: folderPath,
         public_id: `payment_${Date.now()}`,
+        resource_type: 'auto',
+        overwrite: true,
       })
 
       // Delete temp file
@@ -182,6 +212,52 @@ export class TransactionController {
         }
       }
       next(error)
+    }
+  }
+
+  // PUT /api/transactions/:id/confirm-free - Confirm free transaction (no payment)
+  static async confirmFreeTransaction(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.userId
+      const transactionId = parseInt(req.params.id)
+
+      const { prisma } = await import('../utils/prisma')
+
+      // Verify transaction exists, belongs to user, and is free
+      const transaction = await prisma.transaction.findFirst({
+        where: { 
+          id: transactionId, 
+          userId: userId,
+          status: 'WAITING_PAYMENT',
+          totalAmount: 0
+        }
+      })
+
+      if (!transaction) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Transaction not found, not authorized, or not a free transaction' 
+        })
+      }
+
+      // Update transaction to DONE status
+      await prisma.transaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'DONE',
+          confirmedAt: new Date()
+        }
+      })
+
+      res.status(200).json({
+        success: true,
+        message: 'Free transaction confirmed successfully',
+      })
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to confirm free transaction',
+      })
     }
   }
 }

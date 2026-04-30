@@ -116,8 +116,10 @@ export class UserController {
       if (req.file) {
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: folderPath,
-          public_id: `profile_${Date.now()}`,
+          folder: `users/${userId}/profile`,
+          public_id: `profile_${userId}`,
+          resource_type: 'auto',
+          overwrite: true,
         })
         imageUrl = result.secure_url
         // Clean up temporary file

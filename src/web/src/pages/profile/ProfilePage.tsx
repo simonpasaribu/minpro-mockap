@@ -122,20 +122,30 @@ export default function ProfilePage() {
   const availableCoupons = useMemo(() => {
     if (!coupons || !transactions) return coupons?.coupons || []
     
-    // Get all used voucher codes from transaction history
+    // Only count vouchers from DONE transactions (not rejected/cancelled)
     const usedVoucherCodes = new Set(
       transactions
-        .filter(t => t.voucherCode)
-        .map(t => t.voucherCode?.toUpperCase())
+        .filter(t => t.voucherCode && t.status === 'DONE')
+        .map(t => t.voucherCode!.toUpperCase())
     )
     
-    // Return only coupons that haven't been used and are not expired
     const now = new Date()
+    
+    // Return only coupons that haven't been used in DONE transactions and are not expired
     return coupons.coupons.filter(coupon => 
       !usedVoucherCodes.has(coupon.code.toUpperCase()) && 
       new Date(coupon.expiresAt) > now
     )
   }, [coupons, transactions])
+
+  // Copy coupon code to clipboard
+  const copyCouponCode = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      addToast('Kode kupon berhasil disalin!', 'success')
+    }).catch(() => {
+      addToast('Gagal menyalin kode kupon', 'error')
+    })
+  }
 
   const addToast = (message: string, type: 'success' | 'error' = 'success') => {
     const id = Date.now()
@@ -757,17 +767,26 @@ export default function ProfilePage() {
                     <p className="text-xs font-bold uppercase tracking-widest text-[#5f557f]">Kupon Aktif</p>
                   </div>
                   {availableCoupons.length > 0 ? (
-                    <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+                    <div className="space-y-3">
                       {availableCoupons.slice(0, 5).map((coupon: CouponsData['coupons'][0]) => (
                         <div key={coupon.id} className="bg-[#f5eeff] p-3 rounded-xl border border-[#b2a6d5]/20">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-mono font-bold text-sm text-[#4a3fe2]">{coupon.code}</span>
                             <span className="text-xs font-bold text-green-600">{coupon.discount}% OFF</span>
+                            <Tag className="w-4 h-4 text-[#4a3fe2]" />
                           </div>
-                          <p className="text-xs text-[#5f557f] flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Berlaku hingga: {new Date(coupon.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-[#5f557f] flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(coupon.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                            <button
+                              onClick={() => copyCouponCode(coupon.code)}
+                              className="p-2 bg-[#4a3fe2]/5 rounded-lg text-[#4a3fe2] hover:bg-[#4a3fe2]/10 transition-colors"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                       {availableCoupons.length > 5 && (
@@ -777,7 +796,7 @@ export default function ProfilePage() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center min-h-[160px]">
+                    <div className="flex items-center justify-center py-8">
                       <p className="text-sm text-[#5f557f] text-center">Belum ada kupon aktif</p>
                     </div>
                   )}
